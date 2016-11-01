@@ -16,93 +16,114 @@ import ij.process.AutoThresholder;
 import java.awt.*;
 import ij.measure.Calibration;
 import java.util.Arrays;
+import ij.io.DirectoryChooser;
+import ij.io.FileSaver;
+import ij.io.OpenDialog;
 
 public class Interaction_Factor implements PlugIn {
 
-	private static String[] thMethods = AutoThresholder.getMethods();
-	private static String[] channels = { "Red", "Green", "Blue" };
-	protected final static String PREF_KEY = "Interaction_Factor.";
-
 	public void run(String arg) {
-		// String[] thMethods = AutoThresholder.getMethods();
-
+		
+		String[] thMethods = AutoThresholder.getMethods();
+		String[] channels = {"Red","Green","Blue"};
+		String PREF_KEY = "IF_prefs.";
+		int nMaxSimulations = 50;
+		AutoThresholder.Method[] methods = AutoThresholder.Method.values();
+		
+		int thMethodInt = (int) Prefs.get(PREF_KEY + "thMethodInt", 11);
 		int ch1Color = (int) Prefs.get(PREF_KEY + "ch1Color", 0);
 		int ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
-		int thMethodInt = (int) Prefs.get(PREF_KEY + "thMethodInt", 11);
 		boolean edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
 		
 		//Measurement Options
-		boolean sumIntOption = Prefs.get(PREF_KEY + "sumIntOption", true);
+		boolean sumIntOption =  Prefs.get(PREF_KEY + "sumIntOption", true);
 		boolean sumIntThOption = Prefs.get(PREF_KEY + "sumIntThOption", true);
 		boolean meanIntThOption = Prefs.get(PREF_KEY + "meanIntThOption", true);
 		boolean areaOption = Prefs.get(PREF_KEY + "areaOption", true);
 
-		//
+		//Output Options
 		boolean simImageOption = Prefs.get(PREF_KEY + "simImageOption", false);
-		boolean ch1MaskOption = Prefs.get(PREF_KEY + "ch1MaskOption", false);
-		boolean ch2MaskOption = Prefs.get(PREF_KEY + "ch2MaskOption", false);
+		boolean ch1MaskOption =Prefs.get(PREF_KEY + "ch1MaskOption", false);
+		boolean ch2MaskOption =Prefs.get(PREF_KEY + "ch2MaskOption", false);
 		boolean roiMaskOption = Prefs.get(PREF_KEY + "roiMaskOption", false);
 		boolean overlapMaskOption = Prefs.get(PREF_KEY + "overlapMaskOption", false);
 		boolean overlapLocations = Prefs.get(PREF_KEY + "overlapLocations", false);
+		String imagedir =  Prefs.get(PREF_KEY +"imagedir",Prefs.getDefaultDirectory());
+		
 
 		// Dialog
 		GenericDialog gd = new GenericDialog("Interaction Factor");
-
-		// gd.setInsets(15, 5, 5);
-		gd.addMessage("----------- Segmentation -----------");
-		gd.addChoice("Channel_1_(Ch1)_Color:", channels, channels[ch1Color]);
-		gd.addChoice("Channel_2_(Ch2)_Color:", channels, channels[ch2Color]);
-		gd.addChoice("Threshold_Algorithm:", thMethods, thMethods[thMethodInt]);
-		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
-		// gd.setInsets(15, 5, 5);
-		gd.addMessage("------Additional Measuremnts ---------");
-		gd.addCheckbox("Sum_Pixel_Intensities", sumIntOption);
-		gd.addCheckbox("Sum_Pixel_Intensities_>_Th (Clusters Sum Intesities)", sumIntThOption);
-		gd.addCheckbox("Mean_Pixel_Intensities_>_Th (Clusters Mean Intesities)", meanIntThOption);
-		gd.addCheckbox("Clusters Area", meanIntThOption);
-
-
 		
-		gd.addMessage("----------- Output Images -----------");
-		gd.addCheckbox("Random Simulations", simImageOption);
-		gd.addCheckbox("Ch1_Mask", ch1MaskOption);
-		gd.addCheckbox("Ch2_Mask", ch2MaskOption);
-		gd.addCheckbox("ROI_Mask", roiMaskOption);
-		gd.addCheckbox("Overlap_Mask", overlapMaskOption);
+		gd.addMessage("--------------- Segmentation ---------------\n");
+		gd.addChoice("Channe1(Ch1)_Color:", channels, channels[ch1Color]);
+		gd.addChoice("Channe2(Ch2)_Color:", channels, channels[ch2Color]);
+		gd.addChoice("Threshold:", thMethods, thMethods[thMethodInt]);
+		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
+		//gd.setInsets(5, 0, 0);
+
+		gd.addMessage("----------- Additional Measurements --------\n");
+		gd.addCheckbox("Sum_Pixel_Intensities", sumIntOption);
+		gd.addCheckbox("Sum_Pixel_Intensities_>_Th", sumIntThOption);
+		gd.addCheckbox("Mean_Pixel_Intensities_>_Th", meanIntThOption);
+		gd.addCheckbox("Clusters_Area", areaOption);
+		//gd.setInsets(5, 0, 0);
+
+		gd.addMessage("-------------- Output Images ---------------\n");
+		gd.addCheckbox("Save_Random_Simulations", simImageOption);
+		gd.addCheckbox("Show_Ch1_Mask", ch1MaskOption);
+		gd.addCheckbox("Show_Ch2_Mask", ch2MaskOption);
+		gd.addCheckbox("Show_ROI_Mask", roiMaskOption);
+		gd.addCheckbox("Show_Overlap_Mask", overlapMaskOption);
 		gd.addCheckbox("Overlap_Locations", overlapLocations);
 		gd.showDialog();
+		
+		
 
+		//gd.centerDialog(true);
+		
 		if (gd.wasCanceled())
 			return;
 
-		AutoThresholder.Method[] methods = AutoThresholder.Method.values();
-
 		ch1Color = gd.getNextChoiceIndex();
-		ch2Color = gd.getNextChoiceIndex();
-		thMethodInt = gd.getNextChoiceIndex();
-		edgeOption = gd.getNextBoolean();
-		simImageOption = gd.getNextBoolean();
-		ch1MaskOption = gd.getNextBoolean();
-		ch2MaskOption = gd.getNextBoolean();
-		roiMaskOption = gd.getNextBoolean();
-		overlapMaskOption = gd.getNextBoolean();
-		overlapLocations = gd.getNextBoolean();
-
-		// save user preferences
-
 		Prefs.set(PREF_KEY + "ch1Color", ch1Color);
+		ch2Color = gd.getNextChoiceIndex();
 		Prefs.set(PREF_KEY + "ch2Color", ch2Color);
+		thMethodInt = gd.getNextChoiceIndex();
 		Prefs.set(PREF_KEY + "thMethodInt", thMethodInt);
+		edgeOption = gd.getNextBoolean();
 		Prefs.set(PREF_KEY + "edgeOption", edgeOption);
+		sumIntOption = gd.getNextBoolean();
+		Prefs.set(PREF_KEY + "sumIntOption", sumIntOption);
+		sumIntThOption = gd.getNextBoolean();
+		Prefs.set(PREF_KEY + "sumIntThOption", sumIntThOption);
+		meanIntThOption = gd.getNextBoolean();
+		Prefs.set(PREF_KEY + "meanIntThOption", meanIntThOption);
+		areaOption = gd.getNextBoolean();
+		Prefs.set(PREF_KEY + "areaOption", areaOption);
+		simImageOption = gd.getNextBoolean();
 		Prefs.set(PREF_KEY + "simImageOption", simImageOption);
+		ch1MaskOption = gd.getNextBoolean();
 		Prefs.set(PREF_KEY + "ch1MaskOption", ch1MaskOption);
+		ch2MaskOption = gd.getNextBoolean();
 		Prefs.set(PREF_KEY + "ch2MaskOption", ch2MaskOption);
+		roiMaskOption = gd.getNextBoolean();
 		Prefs.set(PREF_KEY + "roiMaskOption", roiMaskOption);
+		overlapMaskOption = gd.getNextBoolean();
 		Prefs.set(PREF_KEY + "overlapMaskOption", overlapMaskOption);
-
+		overlapLocations = gd.getNextBoolean();
+		Prefs.set(PREF_KEY + "overlapLocations", overlapLocations);
+		
+		if (simImageOption){
+			DirectoryChooser chooser = new DirectoryChooser("Choose directory to process");
+			//chooser.setDefaultDirectory(imagedir);
+			imagedir = chooser.getDirectory();
+			//OpenDialog chooser = new OpenDialog("Choose directory for Saved Simulations", imagedir);
+			//imagedir= IJ.getDirectory("Choose directory for Saved Simulations");//chooser.getDirectory();
+					//IJ.getDirectory("Choose directory for Saved Simulations");
+			
+		}
 		IfFunctions fs = new IfFunctions();
 
-		int nMaxSimulations = 50;
 		ImagePlus im = IJ.getImage();
 
 		if (im.getType() != ImagePlus.COLOR_RGB) {
@@ -302,12 +323,10 @@ public class Interaction_Factor implements PlugIn {
 		double ch1MeanInt = (double)ch1SumIntensity/ch1Stats.pixelCount;
 		double ch2MeanInt = (double)ch2SumIntensity/ch2Stats.pixelCount;
 
-
 		// Calculating IF
 
 		double[] ch2ClustersProbs = new double[ch2Clusters.size()];
-		List<ImageProcessor> ch1RandomImgs = new ArrayList<ImageProcessor>();
-		List<ImageProcessor> ch2RandomImgs = new ArrayList<ImageProcessor>();
+		
 		
 		int minX = 0;
 		int maxX = M;
@@ -321,12 +340,62 @@ public class Interaction_Factor implements PlugIn {
 			maxY = (int) roi.getMaxY();
 		}
 		Arrays.fill(ch2ClustersProbs, 0);
+		
 		for (int i = 0; i < nMaxSimulations; i++) {
+			String nSimulation = Integer.toString(i+1);
 			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
-			ch1RandomImgs.add(ipCh1Random);
 			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1Random, ch2ClustersProbs,
 					ch2Clusters, ch2ClustersRect);
-			ch2RandomImgs.add(ipCh2Random);
+			if (simImageOption){
+				byte[] redRandom;
+	            byte[] greenRandom;
+	            byte[] blueRandom;
+	            //Red Green
+	            if (ch1Color == 0 && ch2Color == 1){
+	                redRandom = (byte[]) ipCh1Random.getPixels();
+	                greenRandom =(byte[]) ipCh2Random.getPixels();
+	                blueRandom = ch3;
+	            }
+	            //Green Blue
+	            else if (ch1Color == 1 && ch2Color == 0){
+	                greenRandom = (byte[]) ipCh1Random.getPixels();
+	                redRandom = (byte[]) ipCh2Random.getPixels();
+	                blueRandom = ch3;
+	            }
+	            //Blue Red
+	            else if(ch1Color == 2 && ch2Color == 0) {
+	                blueRandom= (byte[]) ipCh1Random.getPixels();
+	                redRandom = (byte[]) ipCh2Random.getPixels();
+	                greenRandom = ch3;
+	            }
+	            //Red Blue
+	            else if(ch1Color == 0 && ch2Color == 2) {
+	                redRandom= (byte[]) ipCh1Random.getPixels();
+	                blueRandom = (byte[]) ipCh2Random.getPixels();
+	                greenRandom = ch3;
+	            }
+	            //Blue Green
+	            else if (ch1Color == 2 && ch2Color == 1 ){
+	                blueRandom= (byte[]) ipCh1Random.getPixels();
+	                greenRandom = (byte[]) ipCh2Random.getPixels();
+	                redRandom = ch3;
+	            }
+	            //Green Blue
+	            else{
+	                greenRandom= (byte[]) ipCh1Random.getPixels();
+	                blueRandom = (byte[]) ipCh2Random.getPixels();
+	                redRandom = ch3;
+            }
+            //Color Simulation
+            ColorProcessor ipSimulation = new ColorProcessor(M, N);
+
+            ipSimulation.setRGB(redRandom, greenRandom, blueRandom);
+            ImagePlus colorRandIm = new ImagePlus(name + "_Sim" + nSimulation, ipSimulation);
+            FileSaver fileSave = new FileSaver(colorRandIm);
+            fileSave.saveAsTiff(imagedir+name+"_Sim" + nSimulation+".tiff");
+            
+			}
+            
 		}
 		double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulations);
 		double IF = 0;
@@ -334,7 +403,6 @@ public class Interaction_Factor implements PlugIn {
 		IF = fs.calcIF(ch2ClustersProbsTest, origM);
 		
 		//Summary Measurements
-		
 		summary.incrementCounter();
 		summary.addValue("Image", name);
 		summary.addValue("Scale", Double.toString(pixelHeight) + " " + unit);
@@ -343,28 +411,35 @@ public class Interaction_Factor implements PlugIn {
 		summary.addValue(channels[ch1Color] + " Cluster Count", ch1ClusterCount);
 		summary.addValue(channels[ch2Color] + " Cluster Count", ch2ClusterCount);
 		summary.addValue("IF", IF);
-		summary.addValue(channels[ch2Color] + "% Overlaps", origM);
-		summary.addValue("Overlap Area", aOverlapPixels);
 		summary.addValue("Overlap Count", overlapCount);
+		summary.addValue(channels[ch2Color] + "% Overlaps", origM);
 		summary.addValue(channels[ch2Color] + " Overlaps", ch2Overlaps);
-		
+		summary.addValue("Overlap Area", aOverlapPixels);
+
 		//Segmentation
 		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
 		summary.addValue(channels[ch1Color] + " Th", th_ch1);
 		summary.addValue(channels[ch2Color] + " Th", th_ch2);
 		
-		//Channel 1 Measurements 
-		summary.addValue(channels[ch1Color] + " Sum Intensities", ch1SumIntensity);
-		summary.addValue(channels[ch1Color] + " Sum Intensities > th", ch1SumIntensityTh);
-		summary.addValue(channels[ch1Color] + " Mean Intensities > th", ch1MeanInt);
-		summary.addValue(channels[ch1Color] + " Area", aCh1Pixels);
+		//Optional Measurements
 		
-		//Channel 2 Measurements
-		summary.addValue(channels[ch2Color] + " Sum Intensities", ch2SumIntensity);
-		summary.addValue(channels[ch2Color] + " Sum Intensities > th", ch2SumIntensityTh);
-		summary.addValue(channels[ch2Color] + " Mean Intensities > th", ch2MeanInt);
-		summary.addValue(channels[ch2Color] + " Area", aCh2Pixels);
-		
+		if (sumIntOption){
+			summary.addValue(channels[ch1Color] + " Sum Intensities", ch1SumIntensity);
+			summary.addValue(channels[ch2Color] + " Sum Intensities", ch2SumIntensity);
+		}
+		if (sumIntThOption){
+			summary.addValue(channels[ch1Color] + " Sum Intensities > th", ch1SumIntensityTh);
+			summary.addValue(channels[ch2Color] + " Sum Intensities > th", ch2SumIntensityTh);
+		}
+		if (meanIntThOption){
+			summary.addValue(channels[ch1Color] + " Mean Intensities > th", ch1MeanInt);
+			summary.addValue(channels[ch2Color] + " Mean Intensities > th", ch2MeanInt);
+
+		}
+		if (areaOption){
+			summary.addValue(channels[ch1Color] + " Area", aCh1Pixels);
+			summary.addValue(channels[ch2Color] + " Area", aCh2Pixels);
+		}
 		
 		summary.show("Results");
 		
@@ -391,6 +466,8 @@ public class Interaction_Factor implements PlugIn {
 			ImagePlus overlapIm = new ImagePlus(name + " Overlap Mask", ipOverlaps);
 			overlapIm.setCalibration(cal);
 			overlapIm.show();
+			
+		
 		}
 		
 
