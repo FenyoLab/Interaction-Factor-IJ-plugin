@@ -77,7 +77,6 @@ public class Interaction_Factor implements PlugIn {
 		gd.addCheckbox("Overlap_Locations", overlapLocations);
 		gd.showDialog();
 		
-		
 
 		//gd.centerDialog(true);
 		
@@ -327,7 +326,6 @@ public class Interaction_Factor implements PlugIn {
 
 		double[] ch2ClustersProbs = new double[ch2Clusters.size()];
 		
-		
 		int minX = 0;
 		int maxX = M;
 		int minY = 0;
@@ -340,12 +338,26 @@ public class Interaction_Factor implements PlugIn {
 			maxY = (int) roi.getMaxY();
 		}
 		Arrays.fill(ch2ClustersProbs, 0);
-		
+		double countForPval = 0;
 		for (int i = 0; i < nMaxSimulations; i++) {
 			String nSimulation = Integer.toString(i+1);
 			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
+			
 			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1Random, ch2ClustersProbs,
 					ch2Clusters, ch2ClustersRect);
+			 //generate ch2 channel mask
+            ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
+            ipCh2RandomMask.threshold(th_ch2);
+
+            //generate ch1 channel mask
+            ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
+            ipCh1RandomMask.threshold(th_ch1);
+            int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask);
+            
+			double percOverlaps = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
+			if (percOverlaps > origM){
+				countForPval +=1;
+			}
 			if (simImageOption){
 				byte[] redRandom;
 	            byte[] greenRandom;
@@ -397,6 +409,7 @@ public class Interaction_Factor implements PlugIn {
 			}
             
 		}
+		double pVal = countForPval/(double)nMaxSimulations;
 		double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulations);
 		double IF = 0;
 
@@ -411,9 +424,17 @@ public class Interaction_Factor implements PlugIn {
 		summary.addValue(channels[ch1Color] + " Cluster Count", ch1ClusterCount);
 		summary.addValue(channels[ch2Color] + " Cluster Count", ch2ClusterCount);
 		summary.addValue("IF", IF);
-		summary.addValue("Overlap Count", overlapCount);
-		summary.addValue(channels[ch2Color] + "% Overlaps", origM);
+		String pValStr;
+		if (pVal == 0){
+			 pValStr = "p<0.02" ;
+		}
+		else{
+			pValStr ="p="+ String.valueOf(pVal);
+		}
+		summary.addValue("p-val", pValStr);
+		summary.addValue(channels[ch2Color] + "% Overlaps", origM*100);
 		summary.addValue(channels[ch2Color] + " Overlaps", ch2Overlaps);
+		summary.addValue("Overlap Count", overlapCount);
 		summary.addValue("Overlap Area", aOverlapPixels);
 
 		//Segmentation
@@ -473,6 +494,7 @@ public class Interaction_Factor implements PlugIn {
 
 	}
 
+
 	/**
 	 * Main method for debugging.
 	 *
@@ -496,9 +518,9 @@ public class Interaction_Factor implements PlugIn {
 
 		// open sample
 		ImagePlus nucleus = IJ.openImage(
-				"/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/Cells/cell-1_1/cell-1_1_ROI.tif");
+				"/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/ROIs/Result of 1 Reconstruction-1.tif");
 		ImagePlus image = IJ.openImage(
-				"/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/Cells/cell-1_1/cell-1_1_R_G.tif");
+				"/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/images/Result of 1 Reconstruction.tif");
 		image.show();
 		nucleus.show();
 

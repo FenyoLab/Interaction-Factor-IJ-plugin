@@ -105,7 +105,7 @@ public class IfFunctions {
 	ImageProcessor simRandomProb(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
 			ImageProcessor ipCh1Random, double[] ch2ClustersProbs, List<ImageProcessor> ch2Clusters,
 			List<Rectangle> ch2ClustersRect) {
-
+		
 		int M = roiMask.getWidth();
 		int N = roiMask.getHeight();
 		ImageProcessor ipSimulation = new ByteProcessor(M, N); // ip for ch2
