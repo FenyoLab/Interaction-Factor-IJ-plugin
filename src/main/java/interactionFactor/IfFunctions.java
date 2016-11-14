@@ -132,10 +132,12 @@ public class IfFunctions {
 				boolean overlapSelf = true;
 				double overlapOther = 0;
 				int surrounding_pixels = 0;
-				Outer: for (int v = randomTop; v < randomBottom; v++) {
+				Outer: 
+				for (int v = randomTop; v < randomBottom; v++) {
 					for (int u = randomLeft; u < randomRight; u++) {
 						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
-							if (roiMask.getPixel(u, v) < 255) {
+							if (roiMask.getPixel(u, v) != 255) {
+								overlapSelf = true;
 								break Outer;
 							}
 							surrounding_pixels += ipSimulation.getPixel(u, v); // N
@@ -209,6 +211,135 @@ public class IfFunctions {
 
 		return ipSimulation;
 	}
+	ImageProcessor simNonRandom(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
+			ImageProcessor ipCh1Random, List<ImageProcessor> ch2Clusters,
+			List<Rectangle> ch2ClustersRect, double interFactor,int th_other) {
+		
+		int M = roiMask.getWidth();
+		int N = roiMask.getHeight();
+		ImageProcessor ipSimulation = new ByteProcessor(M, N); // ip for ch2
+																// mask
+		for (int i = 0; i < ch2Clusters.size(); i++) {
+
+			Rectangle clusterRect = ch2ClustersRect.get(i);// ip for ch2 mask
+			ImageProcessor cluster = ch2Clusters.get(i);
+			int max = 100000;
+			int randomIter = 0;
+
+			while (randomIter < max) {
+				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
+				// clusterRect.width);
+				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width + 1);
+				// int randomLeft = (int) ((float) Math.random() * (M -
+				// clusterRect.width));
+				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height + 1);
+				// int randomTop = (int) ((float) Math.random() * (N -
+				// clusterRect.height));
+				int randomRight = randomLeft + clusterRect.width;
+				int randomBottom = randomTop + clusterRect.height;
+
+				boolean overlapSelf = true;
+				boolean overlapOther = false;
+				int surrounding_pixels = 0;
+				Outer:
+				for (int v = randomTop; v < randomBottom; v++) {
+					for (int u = randomLeft; u < randomRight; u++) {
+						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+							if (roiMask.getPixel(u, v) != 255) {
+								overlapSelf = true;
+								break Outer;
+							}
+							surrounding_pixels += ipSimulation.getPixel(u, v); // N
+																				// is
+																				// height
+																				// ,
+																				// M
+																				// is
+																				// width
+							if (u + 1 < maximumX) {
+								surrounding_pixels += ipSimulation.getPixel(u + 1, v);
+							}
+							if (u - 1 > minimumX) {
+								surrounding_pixels += ipSimulation.getPixel(u - 1, v);
+							}
+							if (v + 1 < maximumY) {
+								surrounding_pixels += ipSimulation.getPixel(u, v + 1);
+							}
+							if (v - 1 > minimumY) {
+								surrounding_pixels += ipSimulation.getPixel(u, v - 1);
+							}
+							if ((u + 1 < maximumX) && (v + 1 < maximumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u + 1, v + 1);
+							}
+							if ((u - 1 > minimumX) && (v - 1 > minimumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u - 1, v - 1);
+							}
+							if ((u - 1 > minimumX) && (v + 1 < maximumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u - 1, v + 1);
+							}
+							if ((u + 1 < maximumX) && (v - 1 > minimumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u + 1, v - 1);
+							}
+							// checking surrounding pixels
+							if (surrounding_pixels == 0) {
+								overlapSelf = false;
+							} else {
+								overlapSelf = true;
+								break Outer;
+							}
+						}
+					}
+				}
+				if (overlapSelf == false) {
+					Outer:
+					for (int v = randomTop; v < randomBottom; v++) {
+						for (int u = randomLeft; u < randomRight; u++) {
+							if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+								int pOther = ipCh1Random.getPixel(u, v);
+								if (pOther > th_other) {
+									overlapOther = true;
+									break Outer;// this could be changed
+								}
+								else{
+									overlapOther = false; // 
+									}
+							}
+						}
+					}
+				}
+				if (overlapSelf == false && overlapOther == true){
+                    //change pixel
+                    for (int v = randomTop; v < randomBottom; v++) {
+                        for (int u = randomLeft; u < randomRight; u++) {
+                            if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+                                int p = cluster.getPixel(u - randomLeft, v - randomTop);
+                                ipSimulation.putPixel(u, v, p);
+                            }
+                        }
+                    }
+                    randomIter = max; 
+				}
+				if (overlapSelf == false && overlapOther == false){
+                    double random =  Math.random();
+                    if (random  > interFactor){                 
+                        //change pixel
+                        for (int v = randomTop; v < randomBottom; v++) {
+                            for (int u = randomLeft; u < randomRight; u++) {
+                                if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+                                    int p = cluster.getPixel(u - randomLeft, v - randomTop);
+                                    ipSimulation.putPixel(u, v, p);
+                                }
+                            }
+                        }
+                        randomIter = max;
+                    }
+				}
+				randomIter++;
+			}
+		}
+
+		return ipSimulation;
+	}
 
 	ImageProcessor simRandom(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
 			List<ImageProcessor> clusters, List<Rectangle> clustersRect) {
@@ -244,7 +375,8 @@ public class IfFunctions {
 				Outer: for (int v = randomTop; v < randomBottom; v++) {
 					for (int u = randomLeft; u < randomRight; u++) {
 						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
-							if (roiMask.getPixel(u, v) < 255) {
+							if (roiMask.getPixel(u, v) != 255) {
+								overlapSelf = true;
 								break Outer;
 							}
 							surrounding_pixels += ipSimulation.getPixel(u, v); // N
@@ -253,7 +385,7 @@ public class IfFunctions {
 																				// ,
 																				// M
 																				// is
-																				// width
+																			// width
 							if (u + 1 < maximumX) {
 								surrounding_pixels += ipSimulation.getPixel(u + 1, v);
 							}
@@ -349,10 +481,8 @@ public class IfFunctions {
 			for (int v = 0; v < N; v++) {
 				int p = chMaskFlood.get(u, v);
 				if (p == 255) {
-
 					wand.autoOutline(u, v, 255, 255);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
-
 					// Then add the image processor of intensity to the list
 					chMaskFlood.setRoi(roi_par);
 					chMaskFlood.setValue(200);
@@ -569,7 +699,6 @@ public class IfFunctions {
 		Wand wand = new Wand(ipFlood);
 
 		int count = 0;
-
 		int M = ipFlood.getWidth();
 		int N = ipFlood.getHeight();
 
@@ -577,14 +706,12 @@ public class IfFunctions {
 			for (int v = 0; v < N; v++) {
 				int p = ipFlood.get(u, v);
 				if (p == 255) {
-
 					wand.autoOutline(u, v, 255, 255);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
 					ipFlood.setRoi(roi_par);
 					ipFlood.setValue(200);
 					ipFlood.fill(roi_par);
 					count++;
-
 				}
 			}
 		}

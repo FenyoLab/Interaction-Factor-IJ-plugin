@@ -315,9 +315,14 @@ public class Interaction_Factor implements PlugIn {
 		int ch2SumIntensity = fs.sumIntensities(ipCh2);
 		int ch1SumIntensityTh = fs.sumIntensitiesMask(ipCh1, ipCh1Mask);
 		int ch2SumIntensityTh = fs.sumIntensitiesMask(ipCh2, ipCh2Mask);
-		int ch2Overlaps = fs.ch2ClusterOverlaps(ipCh1Mask, ipCh2Mask);
-		double origM = (double) ch2Overlaps / (double) ch2ClusterCount;
 		
+		int ch2Overlaps = fs.ch2ClusterOverlaps(ipCh1Mask, ipCh2Mask);
+		int ch1Overlaps = fs.ch2ClusterOverlaps(ipCh2Mask, ipCh1Mask);
+		
+		//Percentage of Overlaps
+		double ch2Percentage = (double) ch2Overlaps / (double) ch2ClusterCount;
+		double ch1Percentage = (double) ch1Overlaps / (double) ch1ClusterCount;
+
 		//Average Mean intensity
 		double ch1MeanInt = (double)ch1SumIntensity/ch1Stats.pixelCount;
 		double ch2MeanInt = (double)ch2SumIntensity/ch2Stats.pixelCount;
@@ -339,6 +344,7 @@ public class Interaction_Factor implements PlugIn {
 		}
 		Arrays.fill(ch2ClustersProbs, 0);
 		double countForPval = 0;
+		
 		for (int i = 0; i < nMaxSimulations; i++) {
 			String nSimulation = Integer.toString(i+1);
 			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
@@ -352,10 +358,11 @@ public class Interaction_Factor implements PlugIn {
             //generate ch1 channel mask
             ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
             ipCh1RandomMask.threshold(th_ch1);
-            int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask);
-            
+            int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask); // check this maybe replace with  fs.ch2ClusterOverlaps(ipCh1Mask, ipCh2Mask)
+           
 			double percOverlaps = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
-			if (percOverlaps > origM){
+			
+			if (percOverlaps > ch2Percentage){
 				countForPval +=1;
 			}
 			if (simImageOption){
@@ -413,7 +420,7 @@ public class Interaction_Factor implements PlugIn {
 		double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulations);
 		double IF = 0;
 
-		IF = fs.calcIF(ch2ClustersProbsTest, origM);
+		IF = fs.calcIF(ch2ClustersProbsTest, ch2Percentage);
 		
 		//Summary Measurements
 		summary.incrementCounter();
@@ -421,9 +428,8 @@ public class Interaction_Factor implements PlugIn {
 		summary.addValue("Scale", Double.toString(pixelHeight) + " " + unit);
 	    
 		//Overlap Measurements
-		summary.addValue(channels[ch1Color] + " Cluster Count", ch1ClusterCount);
-		summary.addValue(channels[ch2Color] + " Cluster Count", ch2ClusterCount);
-		summary.addValue("IF", IF);
+		
+		summary.addValue(channels[ch1Color]+ "-" +channels[ch2Color]+" IF", IF);
 		String pValStr;
 		if (pVal == 0){
 			 pValStr = "p<0.02" ;
@@ -432,8 +438,13 @@ public class Interaction_Factor implements PlugIn {
 			pValStr ="p="+ String.valueOf(pVal);
 		}
 		summary.addValue("p-val", pValStr);
-		summary.addValue(channels[ch2Color] + "% Overlaps", origM*100);
+		summary.addValue(channels[ch1Color] + " Cluster Count", ch1ClusterCount);
+		summary.addValue(channels[ch1Color]+" Overlaps",ch1Overlaps);
+        summary.addValue(channels[ch1Color]+" %Overlaps",ch1Percentage);
+        
+		summary.addValue(channels[ch2Color] + " Cluster Count", ch2ClusterCount);
 		summary.addValue(channels[ch2Color] + " Overlaps", ch2Overlaps);
+		summary.addValue(channels[ch2Color] + "% Overlaps", ch2Percentage*100);
 		summary.addValue("Overlap Count", overlapCount);
 		summary.addValue("Overlap Area", aOverlapPixels);
 
