@@ -498,8 +498,6 @@ public class Interaction_Factor implements PlugIn {
 			ImagePlus overlapIm = new ImagePlus(name + " Overlap Mask", ipOverlaps);
 			overlapIm.setCalibration(cal);
 			overlapIm.show();
-			
-		
 		}
 		
 

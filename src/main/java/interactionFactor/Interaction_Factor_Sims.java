@@ -5,10 +5,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.gui.GenericDialog;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.gui.Wand;
-import ij.io.FileSaver;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.process.*;
@@ -18,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.awt.*;
 import ij.measure.Calibration;
-
+import java.lang.Math;
 
 public class Interaction_Factor_Sims implements PlugIn {
 	private static String[] thMethods = AutoThresholder.getMethods();
@@ -351,6 +348,10 @@ public class Interaction_Factor_Sims implements PlugIn {
         //Percentage of Overlaps
       	double ch1Percentage = (double) ch1Overlaps / (double) ch1ClusterCount;
       	double ch2Percentage = (double) ch2Overlaps / (double) ch2ClusterCount;
+       
+      	//Average Mean intensity
+      	double ch1MeanInt = (double)ch1SumIntensity/ch1Stats.pixelCount;
+      	double ch2MeanInt = (double)ch2SumIntensity/ch2Stats.pixelCount;
       	
        //Calculating IF
 
@@ -412,12 +413,13 @@ public class Interaction_Factor_Sims implements PlugIn {
 		}
         //Overlap measurements
 		summary.addValue("p-val", pValStr);
+		 
         summary.addValue(channels[ch1Color]+ " Cluster Count",ch1ClusterCount);
 		summary.addValue(channels[ch1Color]+" Overlaps",ch1Overlaps);
-        summary.addValue(channels[ch1Color]+" %Overlaps",ch1Percentage);
+        summary.addValue(channels[ch1Color]+" %Overlaps",ch1Percentage*100);
         summary.addValue(channels[ch2Color]+" Cluster Count", ch2ClusterCount);
         summary.addValue(channels[ch2Color]+" Overlaps",ch2Overlaps);
-        summary.addValue(channels[ch2Color]+" %Overlaps",ch2Percentage);
+        summary.addValue(channels[ch2Color]+" %Overlaps",ch2Percentage*100);
         summary.addValue("Overlap Count",overlapCount);
         summary.addValue("Overlap Area",aOverlapPixels);
         
@@ -427,8 +429,10 @@ public class Interaction_Factor_Sims implements PlugIn {
         summary.addValue(channels[ch2Color] + " Th",th_ch2);
         summary.addValue(channels[ch1Color]  +" Sum Intensities",ch1SumIntensity);
         summary.addValue(channels[ch1Color]  +" Sum Intensities > th",ch1SumIntensityTh);
+        summary.addValue(channels[ch1Color] + " Mean Intensities > th", ch1MeanInt);
         summary.addValue(channels[ch2Color]  +" Sum Intensities",ch2SumIntensity);
         summary.addValue(channels[ch2Color]  +" Sum Intensities > th",ch2SumIntensityTh);
+		summary.addValue(channels[ch2Color] + " Mean Intensities > th", ch2MeanInt);
         summary.addValue(channels[ch1Color]+" Area",aCh1Pixels);
         summary.addValue(channels[ch2Color]+" Area",aCh2Pixels);
 
@@ -520,8 +524,10 @@ public class Interaction_Factor_Sims implements PlugIn {
                 ColorProcessor ipSimulation = new ColorProcessor(M, N);
 
                 ipSimulation.setRGB(redRandom, greenRandom, blueRandom);
-
-                ImagePlus colorRandIm = new ImagePlus(name + "_Sim_IF_"+Double.toString(interFactorCh2) + nSimulation, ipSimulation);
+                double interFactorCh2Int = interFactorCh2*100;
+                
+                
+                ImagePlus colorRandIm = new ImagePlus(name + "_Sim_IF_"+Integer.toString((int)interFactorCh2Int) +"_"+nSimulation, ipSimulation);
                 colorRandIm.setCalibration(cal);
 
                 if (simImageOption){
@@ -569,7 +575,11 @@ public class Interaction_Factor_Sims implements PlugIn {
                 int oRandomCount = fs.clustersProcessing(name + "_Sim_" + nSimulation, true,rTable,cal ,ipOverlapFlood, ipOverlapsRandom, oClustersRandom, oClustersRectRandom);
                 int ch1RandomOverlaps = fs.overlapCount(ipCh1RandomMask, ipCh2RandomMask);
                 int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask);
-
+                
+             
+              	double ch1PercentageRandom = (double) ch1RandomOverlaps / (double) ch1ClusterCount;
+              	double ch2PercentageRandom = (double) ch2RandomOverlaps / (double) ch2ClusterCount;
+              	
 
                 //Overlap
                 ipCh1Random.setMask(ipOverlapsRandom);
@@ -611,14 +621,16 @@ public class Interaction_Factor_Sims implements PlugIn {
                     summary.addValue(channels[ch1Color]+ "-" +channels[ch2Color]+" IF", interFactorCh2);
                     //summary.addValue(channels[ch2Color]  +" IF", interFactorCh2);
                     }
+                summary.addValue("p-val", "None");
+                //Clusers and clusters overlaps, percentages 
                 summary.addValue("Th Algorithm",thMethods[thMethodInt]);
                 summary.addValue(channels[ch1Color]  +" Th",th_ch1);
                 summary.addValue(channels[ch2Color] + " Th", th_ch2);
-                summary.addValue(channels[ch1Color]  +" Sum Intensities",ch1SumIntensity);
+                summary.addValue(channels[ch1Color]  +" Sum Intensities","None");
                 summary.addValue(channels[ch1Color]  +" Sum Intensities > th",ch1SumIntensityTh);
                 summary.addValue(channels[ch1Color]+" Area", aCh1Pixels);
                 summary.addValue(channels[ch1Color]+ " Cluster Count",ch1ClusterCount);
-                summary.addValue(channels[ch1Color]  +" Sum Intensities",ch2SumIntensity);
+                summary.addValue(channels[ch2Color]  +" Sum Intensities","None");
                 summary.addValue(channels[ch2Color]  +" Sum Intensities > th",ch2SumIntensityTh);
                 summary.addValue(channels[ch2Color]+" Area",aCh2Pixels);
                 summary.addValue(channels[ch2Color]+" Cluster Count", ch2ClusterCount);
@@ -626,9 +638,12 @@ public class Interaction_Factor_Sims implements PlugIn {
                 summary.addValue("Overlap Area", aOverlapRandomPixels);
                 summary.addValue("Overlap Count", oRandomCount);
                 summary.addValue(channels[ch1Color]+" Overlaps",ch1RandomOverlaps);
+                summary.addValue(channels[ch1Color]+" %Overlaps",ch1PercentageRandom*100);
                 summary.addValue(channels[ch2Color]+" Overlaps",ch2RandomOverlaps);
-                
-            
+                summary.addValue(channels[ch2Color]+" %Overlaps",ch2PercentageRandom*100);     
+        		summary.addValue(channels[ch1Color] + " Mean Intensities > th", ch1MeanInt);
+        		summary.addValue(channels[ch2Color] + " Mean Intensities > th", ch2MeanInt);
+
             }
         }
 
