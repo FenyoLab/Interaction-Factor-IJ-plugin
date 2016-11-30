@@ -440,7 +440,7 @@ public class Interaction_Factor implements PlugIn {
 		summary.addValue("p-val", pValStr);
 		summary.addValue(channels[ch1Color] + " Cluster Count", ch1ClusterCount);
 		summary.addValue(channels[ch1Color]+" Overlaps",ch1Overlaps);
-        summary.addValue(channels[ch1Color]+" %Overlaps",ch1Percentage);
+        summary.addValue(channels[ch1Color]+" %Overlaps",ch1Percentage*100);
         
 		summary.addValue(channels[ch2Color] + " Cluster Count", ch2ClusterCount);
 		summary.addValue(channels[ch2Color] + " Overlaps", ch2Overlaps);
