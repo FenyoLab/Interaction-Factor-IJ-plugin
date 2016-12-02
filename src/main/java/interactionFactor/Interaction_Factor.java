@@ -1,5 +1,6 @@
 package interactionFactor;
-
+import ij.gui.NonBlockingGenericDialog;
+import ij.gui.DialogListener;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -20,8 +21,18 @@ import ij.io.DirectoryChooser;
 import ij.io.FileSaver;
 import ij.io.OpenDialog;
 
-public class Interaction_Factor implements PlugIn {
-
+public class Interaction_Factor implements PlugIn, DialogListener {
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
+	{
+		//if(e.source.name == 'choice0') {
+		//	{
+		//		th_name = e.item;
+		//
+		//	}
+		//}
+		IJ.log("test");
+		return true;
+	}
 	public void run(String arg) {
 		
 		String[] thMethods = AutoThresholder.getMethods();
@@ -52,7 +63,8 @@ public class Interaction_Factor implements PlugIn {
 		
 
 		// Dialog
-		GenericDialog gd = new GenericDialog("Interaction Factor");
+		GenericDialog gd = new NonBlockingGenericDialog("Interaction Factor");
+		gd.addDialogListener((DialogListener)this);
 		
 		gd.addMessage("--------------- Segmentation ---------------\n");
 		gd.addChoice("Channe1(Ch1)_Color:", channels, channels[ch1Color]);
