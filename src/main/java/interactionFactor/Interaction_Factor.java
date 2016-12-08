@@ -13,7 +13,6 @@ import ij.process.*;
 import ij.plugin.filter.Analyzer;
 import java.util.ArrayList;
 import java.util.List;
-import ij.process.AutoThresholder;
 import java.awt.*;
 import ij.measure.Calibration;
 import java.util.Arrays;
@@ -76,10 +75,142 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 				if(command == "Apply Overlay")
 				{
 					IJ.log("Apply Overlay");
+					int ch1Color = gd.getNextChoiceIndex();
+					int ch2Color = gd.getNextChoiceIndex();
+					int thMethodInt = gd.getNextChoiceIndex();
+					boolean edgeOption = gd.getNextBoolean();
+					
+					
+					IfFunctions fs = new IfFunctions();
+
+					ImagePlus im = IJ.getImage();
+
+					if (im.getType() != ImagePlus.COLOR_RGB) {
+						IJ.error("RGB image required");
+						
+					}
+
+					if (ch1Color == ch2Color) {
+						IJ.error("Channel Colors are the same. Choose another channel");
+				
+					}
+
+					AutoThresholder.Method method = methods[thMethodInt];
+
+
+					ImageProcessor ip = im.getProcessor();
+					Rectangle roi = ip.getRoi();
+					Roi roiSelection = im.getRoi();
+
+					ImageProcessor mask = im.getMask();// ip for the roi mask but only with
+					// surrounding box
+
+					int M = ip.getWidth();
+					int N = ip.getHeight();
+					int size = M * N;
+
+					byte[] red = new byte[size];
+					byte[] green = new byte[size];
+					byte[] blue = new byte[size];
+
+					((ColorProcessor) ip).getRGB(red, green, blue);
+
+					ImageProcessor ipCh1 = new ByteProcessor(M, N); // ip for ch1 mask
+					ImageProcessor ipCh2 = new ByteProcessor(M, N); // ip for ch2 mask
+					ImageProcessor ipCh3 = new ByteProcessor(M, N); // ip for ch1 mask
+					// mask
+					ImageProcessor ipMask = new ByteProcessor(M, N); // ip for roi mask
+
+					byte[] ch3;
+
+					// Color of Ch1
+					if (ch1Color == 0) {
+						ipCh1.setPixels(red);
+					} else if (ch1Color == 1) {
+						ipCh1.setPixels(green);
+					} else {
+						ipCh1.setPixels(blue);
+					}
+					// Color of Ch2
+					if (ch2Color == 0) {
+						ipCh2.setPixels(red);
+					} else if (ch2Color == 1) {
+						ipCh2.setPixels(green);
+					} else {
+						ipCh2.setPixels(blue);
+					}
+					// Color of Ch3
+					if (ch1Color + ch2Color == 1) {
+						ipCh3.setPixels(blue);
+						ch3 = blue;
+					} else if (ch1Color + ch2Color == 2) {
+						ipCh3.setPixels(green);
+						ch3 = green;
+					} else {
+						ipCh3.setPixels(red);
+						ch3 = red;
+					}
+
+					boolean hasMask = (mask != null);
+					boolean hasRoi = (roiSelection != null);
+
+					if (hasMask) {
+						ipMask.insert(mask, roi.x, roi.y);
+						// method to insert another ip inside an ip does not work with
+						// rectangular rois
+					} else {
+						ipMask.setValue(255);
+						ipMask.setRoi(roi);
+						ipMask.fill();
+					}
+
+					for (int u = 0; u < M; u++) {
+						for (int v = 0; v < N; v++) {
+							int p = ipMask.getPixel(u, v);
+							if (p == 0) {
+								ipCh1.putPixel(u, v, 0);
+								ipCh2.putPixel(u, v, 0);
+								ipCh3.putPixel(u, v, 0);
+							}
+
+						}
+					}
+
+					ImageProcessor ipCh1Mask = ipCh1.duplicate();
+					ImageProcessor ipCh2Mask = ipCh2.duplicate();
+
+					AutoThresholder autoth = new AutoThresholder();
+
+					// Threshold ch1 channel
+					ipCh1Mask.setMask(ipMask);
+					int[] ch1_hist = ipCh1Mask.getHistogram();
+					int th_ch1 = autoth.getThreshold(method, ch1_hist);
+					ipCh1Mask.threshold(th_ch1);
+
+					// Threshold ch2 channel
+
+					ipCh2Mask.setMask(ipMask);
+					int[] ch2_hist = ipCh2Mask.getHistogram();
+					int th_ch2 = autoth.getThreshold(method, ch2_hist);
+					ipCh2Mask.threshold(th_ch2);
+
+					if (edgeOption) {
+						if (hasRoi) {
+							fs.excludeEdgesRoi(roiSelection, ipMask, ipCh1Mask);
+							fs.excludeEdgesRoi(roiSelection, ipMask, ipCh2Mask);
+						} else {
+							fs.excludeEdges(roi, ipMask, ipCh1Mask);
+							fs.excludeEdges(roi, ipMask, ipCh2Mask);
+						}
+					}
+					
+					fs.setClustersOverlay(im, ipCh1Mask,  ipCh2Mask);
+					
 				}
 				if(command == "Clear Overlay")
 				{
 					IJ.log("Clear Overlay");
+					IJ.run("Remove Overlay");
 				}
 			}
 		}
@@ -190,7 +321,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		// ** Need to check Macro still works **
 
 		gd.showDialog();
-
+		
+		
 		//gd.centerDialog(true);
 		
 		//if (gd.wasCanceled())
@@ -199,37 +331,39 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 	private void run_IF(GenericDialog gd)
 	{
-
+		//get options
 		int ch1Color = gd.getNextChoiceIndex();
-		Prefs.set(PREF_KEY + "ch1Color", ch1Color);
 		int ch2Color = gd.getNextChoiceIndex();
-		Prefs.set(PREF_KEY + "ch2Color", ch2Color);
 		int thMethodInt = gd.getNextChoiceIndex();
-		Prefs.set(PREF_KEY + "thMethodInt", thMethodInt);
 		boolean edgeOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "edgeOption", edgeOption);
 		boolean sumIntOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "sumIntOption", sumIntOption);
 		boolean sumIntThOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "sumIntThOption", sumIntThOption);
 		boolean meanIntThOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "meanIntThOption", meanIntThOption);
 		boolean areaOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "areaOption", areaOption);
 		boolean simImageOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "simImageOption", simImageOption);
 		boolean ch1MaskOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "ch1MaskOption", ch1MaskOption);
 		boolean ch2MaskOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "ch2MaskOption", ch2MaskOption);
 		boolean roiMaskOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "roiMaskOption", roiMaskOption);
 		boolean overlapMaskOption = gd.getNextBoolean();
-		Prefs.set(PREF_KEY + "overlapMaskOption", overlapMaskOption);
 		boolean overlapLocations = gd.getNextBoolean();
+		
+		// set options
+		Prefs.set(PREF_KEY + "ch1Color", ch1Color);
+		Prefs.set(PREF_KEY + "ch2Color", ch2Color);
+		Prefs.set(PREF_KEY + "thMethodInt", thMethodInt);
+		Prefs.set(PREF_KEY + "edgeOption", edgeOption);
+		Prefs.set(PREF_KEY + "sumIntOption", sumIntOption);
+		Prefs.set(PREF_KEY + "sumIntThOption", sumIntThOption);
+		Prefs.set(PREF_KEY + "meanIntThOption", meanIntThOption);
+		Prefs.set(PREF_KEY + "areaOption", areaOption);
+		Prefs.set(PREF_KEY + "simImageOption", simImageOption);
+		Prefs.set(PREF_KEY + "ch1MaskOption", ch1MaskOption);
+		Prefs.set(PREF_KEY + "ch2MaskOption", ch2MaskOption);
+		Prefs.set(PREF_KEY + "roiMaskOption", roiMaskOption);
+		Prefs.set(PREF_KEY + "overlapMaskOption", overlapMaskOption);
 		Prefs.set(PREF_KEY + "overlapLocations", overlapLocations);
-		String imagedir = ".";
 
+		String imagedir = ".";
 		if (simImageOption){
 			DirectoryChooser chooser = new DirectoryChooser("Choose directory to process");
 			//chooser.setDefaultDirectory(imagedir);
@@ -643,12 +777,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		new ImageJ();
 
 		// open sample
-		//ImagePlus nucleus = IJ.openImage(
-		//		"/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/ROIs/Result of 1 Reconstruction-1.tif");
-		//ImagePlus image = IJ.openImage(
-		//		"/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/images/Result of 1 Reconstruction.tif");
-		//image.show();
-		//nucleus.show();
+		ImagePlus nucleus = IJ.openImage("/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/ROIs/Result of 1 Reconstruction-1.tif");
+		ImagePlus image = IJ.openImage("/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/images/Result of 1 Reconstruction.tif");
+		image.show();
+		nucleus.show();
 
 	}
 
