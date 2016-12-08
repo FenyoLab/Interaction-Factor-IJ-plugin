@@ -40,7 +40,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	{
 		if(e != null)
 		{
-			if(e.getID() == 701)
+			// REMOVED - We will no longer do it this way
+			/*if(e.getID() == 701)
 			{
 				ItemEvent e_ = (ItemEvent) e;
 				Object c = e_.getSource();
@@ -54,9 +55,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 						//Execute TH code here
 					}
+
 				}
 
-			}
+			}*/
 			if(e.getID() == 1001)
 			{
 				ActionEvent e_ = (ActionEvent) e;
@@ -67,12 +69,26 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					IJ.log("Running IF...");
 					run_IF(gd);
 				}
+				if(command == "Close")
+				{
+					gd.dispose();
+				}
+				if(command == "Apply Overlay")
+				{
+					IJ.log("Apply Overlay");
+				}
+				if(command == "Clear Overlay")
+				{
+					IJ.log("Clear Overlay");
+				}
 			}
 		}
-		//else
-		//{
-		//	IJ.log("e is NULL.");
-		//}
+		else
+		{
+
+			gd.repaint();
+			IJ.log("Started IF Plugin...");
+		}
 		return true;
 	}
 
@@ -112,6 +128,20 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
 		//gd.setInsets(5, 0, 0);
 
+		// ***** Apply and Remove Overlay Buttons *****
+		Panel buttons = new Panel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+		Button b1 = new Button("Apply Overlay");
+		b1.addActionListener(gd);
+		b1.addKeyListener(gd);
+		buttons.add(b1);
+		Button b2 = new Button("Clear Overlay");
+		b2.addActionListener(gd);
+		b2.addKeyListener(gd);
+		buttons.add(b2);
+		gd.addPanel(buttons, GridBagConstraints.CENTER, new Insets(15,0,0,0));
+		// *****
+
 		gd.addMessage("----------- Additional Measurements --------\n");
 		gd.addCheckbox("Sum_Pixel_Intensities", sumIntOption);
 		gd.addCheckbox("Sum_Pixel_Intensities_>_Th", sumIntThOption);
@@ -131,17 +161,23 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.setOKLabel("Close");
 		gd.hideCancelButton();
 
-		Panel buttons = new Panel();
+		// ***** Run IF and Close buttons *****
+		buttons = new Panel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
-		Button IF_b = new Button("Run IF");
-		IF_b.addActionListener(gd);
-		IF_b.addKeyListener(gd);
-		buttons.add(IF_b);
+		b1 = new Button("Run IF");
+		b1.addActionListener(gd);
+		b1.addKeyListener(gd);
+		buttons.add(b1);
+
+		b2 = new Button("Close");
+		b2.addActionListener(gd);
+		b2.addKeyListener(gd);
+		buttons.add(b2);
 
 		GridBagLayout grid = (GridBagLayout) gd.getLayout();
 		GridBagConstraints c = new GridBagConstraints();
 
-		c.gridx = 0; c.gridy = 17+1; // ** NOTE - 17 is the number of items added to the Dialog (above), change if adding more **
+		c.gridx = 0; c.gridy = 18; // ** NOTE - 18 is the number of items added to the Dialog **
 		c.anchor = GridBagConstraints.EAST;
 		c.gridwidth = 2;
 		c.insets = new Insets(15, 0, 0, 0);
@@ -149,7 +185,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.add(buttons);
 		//END Code for customized buttons
 
-		//Removed code below to DO NOTHING when "Ok" button is pressed (has been changed to "Cancel" button)
+		//Removed code below to DO NOTHING when "Ok" button is pressed
 		//IF Code placed in separate function
 		// ** Need to check Macro still works **
 
