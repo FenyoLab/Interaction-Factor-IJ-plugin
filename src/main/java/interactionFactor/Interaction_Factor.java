@@ -1,11 +1,13 @@
 package interactionFactor;
 import ij.gui.NonBlockingGenericDialog;
+import ij.gui.Overlay;
 import ij.gui.DialogListener;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.gui.GenericDialog;
+import ij.gui.ImageCanvas;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
@@ -13,12 +15,14 @@ import ij.process.*;
 import ij.plugin.filter.Analyzer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 import java.awt.*;
 import ij.measure.Calibration;
 import java.util.Arrays;
 import ij.io.DirectoryChooser;
 import ij.io.FileSaver;
 import java.awt.event.*;
+import java.awt.Color;
 
 public class Interaction_Factor implements PlugIn, DialogListener {
 
@@ -62,25 +66,31 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			{
 				ActionEvent e_ = (ActionEvent) e;
 				String command = e_.getActionCommand();
-				if(command == "Run IF")
+				if(command == "Test IF")
 				{
 					//Execute IF code here
-					IJ.log("Running IF...");
+					//IJ.log("Running IF...");
 					run_IF(gd);
-				}
-				if(command == "Close")
-				{
-					gd.dispose();
 				}
 				if(command == "Apply Overlay")
 				{
-					IJ.log("Apply Overlay");
-					int ch1Color = gd.getNextChoiceIndex();
-					int ch2Color = gd.getNextChoiceIndex();
-					int thMethodInt = gd.getNextChoiceIndex();
-					boolean edgeOption = gd.getNextBoolean();
+					//IJ.log("Apply Overlay");
+					//IJ.run("Remove Overlay");
+					//choices
+					Choice choice0 = (Choice) gd.getChoices().get(0);
+					int ch1Color = choice0.getSelectedIndex();
 					
+					Choice choice1 = (Choice) gd.getChoices().get(1);
+					int ch2Color = choice1.getSelectedIndex();
 					
+					Choice choice2 = (Choice) gd.getChoices().get(2);
+					int thMethodInt = choice2.getSelectedIndex();
+					
+					//checkbox
+					Vector checkboxes = gd.getCheckboxes();
+					Checkbox check0 = (Checkbox) checkboxes.get(0);
+					boolean edgeOption = check0.getState();
+
 					IfFunctions fs = new IfFunctions();
 
 					ImagePlus im = IJ.getImage();
@@ -193,7 +203,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					int[] ch2_hist = ipCh2Mask.getHistogram();
 					int th_ch2 = autoth.getThreshold(method, ch2_hist);
 					ipCh2Mask.threshold(th_ch2);
-
+					
+					IJ.setThreshold(im, th_ch2, 255,"Red");
+					im.updateAndDraw();
+					
 					if (edgeOption) {
 						if (hasRoi) {
 							fs.excludeEdgesRoi(roiSelection, ipMask, ipCh1Mask);
@@ -204,12 +217,36 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 						}
 					}
 					
-					fs.setClustersOverlay(im, ipCh1Mask,  ipCh2Mask);
-					
+					//fs.setClustersOverlay(im, ipCh1Mask,  ipCh2Mask);
+					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
+					Color stColor = Color.WHITE;
+					Color fColor = new Color((float)1.0,(float)1.0,(float)1.0,(float)1.0);
+					//chsOverlays.setFillColor(fColor);
+					chsOverlays.setStrokeColor(stColor);
+					im.setOverlay(chsOverlays);
+
+					// im.setOverlay(ovCh1);
+					//im.setOverlay(chsOverlays);
+					//IJ.run(im, "Select None", "");
+					//Overlay orig = im.getOverlay();
+					//im.drawOverlay(chsOverlays);
+					//ip.setOverlay(chsOverlays);
+					//im.updateAndDraw();
+					//im.draw();
+					//ImageCanvas ic = im.getCanvas();
+					//ic.setImageUpdated();
+					//ic.resetDoubleBuffer();
+					//im.setRoi(roi);
+					//chsOverlays.drawBackgrounds(true);
+
+
 				}
 				if(command == "Clear Overlay")
 				{
-					IJ.log("Clear Overlay");
+					//IJ.log("Clear Overlay");
+					//IJ.run("Remove Overlay");
+					ImagePlus im = IJ.getImage();
+					//im.setHideOverlay(true);
 					IJ.run("Remove Overlay");
 				}
 			}
@@ -218,7 +255,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		{
 
 			gd.repaint();
-			IJ.log("Started IF Plugin...");
+			//IJ.log("Started IF Plugin...");
 		}
 		return true;
 	}
@@ -313,20 +350,38 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private void run_IF(GenericDialog gd)
 	{
 		//get options
-		int ch1Color = gd.getNextChoiceIndex();
-		int ch2Color = gd.getNextChoiceIndex();
-		int thMethodInt = gd.getNextChoiceIndex();
-		boolean edgeOption = gd.getNextBoolean();
-		boolean sumIntOption = gd.getNextBoolean();
-		boolean sumIntThOption = gd.getNextBoolean();
-		boolean meanIntThOption = gd.getNextBoolean();
-		boolean areaOption = gd.getNextBoolean();
-		boolean simImageOption = gd.getNextBoolean();
-		boolean ch1MaskOption = gd.getNextBoolean();
-		boolean ch2MaskOption = gd.getNextBoolean();
-		boolean roiMaskOption = gd.getNextBoolean();
-		boolean overlapMaskOption = gd.getNextBoolean();
-		boolean overlapLocations = gd.getNextBoolean();
+		Choice choice0 = (Choice) gd.getChoices().get(0);
+		int ch1Color = choice0.getSelectedIndex();
+		Choice choice1 = (Choice) gd.getChoices().get(1);
+		int ch2Color = choice1.getSelectedIndex();
+		Choice choice2 = (Choice) gd.getChoices().get(2);
+		int thMethodInt = choice2.getSelectedIndex();
+		
+		Vector checkboxes = gd.getCheckboxes();
+		Checkbox check0 = (Checkbox) checkboxes.get(0);
+		Checkbox check1 = (Checkbox) checkboxes.get(1);
+		Checkbox check2 = (Checkbox) checkboxes.get(2);
+		Checkbox check3 = (Checkbox) checkboxes.get(3);
+		Checkbox check4 = (Checkbox) checkboxes.get(4);
+		Checkbox check5 = (Checkbox) checkboxes.get(5);
+		Checkbox check6 = (Checkbox) checkboxes.get(6);
+		Checkbox check7 = (Checkbox) checkboxes.get(7);
+		Checkbox check8 = (Checkbox) checkboxes.get(8);
+		Checkbox check9 = (Checkbox) checkboxes.get(9);
+		Checkbox check10 = (Checkbox) checkboxes.get(10);
+
+
+		boolean edgeOption = check0.getState();
+		boolean sumIntOption = check1.getState();
+		boolean sumIntThOption = check2.getState();
+		boolean meanIntThOption = check3.getState();
+		boolean areaOption = check4.getState();
+		boolean simImageOption = check5.getState();
+		boolean ch1MaskOption = check6.getState();
+		boolean ch2MaskOption = check7.getState();
+		boolean roiMaskOption = check8.getState();
+		boolean overlapMaskOption = check9.getState();
+		boolean overlapLocations = check10.getState();;
 		
 		// set options
 		Prefs.set(PREF_KEY + "ch1Color", ch1Color);
@@ -521,6 +576,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 		int ch2ClusterCount = fs.clustersProcessing(cal, rTable, ipCh2Flood, ipCh2, ch2Clusters, ch2ClustersRect);
 
+		if (ch1ClusterCount == 0 || ch2ClusterCount == 0){
+			IJ.error("Zero Clusters. Choose another color");
+			
+		}
 		// Adding Overlays
 		ImageProcessor ipCh1FloodCopy = ipCh1Mask.duplicate();
 		ImageProcessor ipCh2FloodCopy = ipCh2Mask.duplicate();

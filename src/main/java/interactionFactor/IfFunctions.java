@@ -579,7 +579,7 @@ public class IfFunctions {
 		// Color red_color = new Color( 255, 0, 0);
 		Overlay ovCh = new Overlay();
 
-		int M = im.getWidth();
+		int M = ipCh1Mask.getWidth();
 		int N = ipCh1Mask.getHeight();
 		Wand wandCh1 = new Wand(ipCh1Mask);
 		for (int u = 0; u < M; u++) {
@@ -606,11 +606,45 @@ public class IfFunctions {
 			}
 		}
 		Color test_color = Color.WHITE;
-		
 		ovCh.setStrokeColor(test_color);
 		// im.setOverlay(ovCh1);
 		// ovCh2.setStrokeColor(red_color);
 		im.setOverlay(ovCh);
+
+	}
+	Overlay returnOverlay(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
+
+		// Color red_color = new Color( 255, 0, 0);
+		Overlay ovCh = new Overlay();
+
+		int M = ipCh1Mask.getWidth();
+		int N = ipCh1Mask.getHeight();
+		Wand wandCh1 = new Wand(ipCh1Mask);
+		for (int u = 0; u < M; u++) {
+			for (int v = 0; v < N; v++) {
+				int p = ipCh1Mask.get(u, v);
+				if (p == 255) {
+					wandCh1.autoOutline(u, v, 255, 255);
+					PolygonRoi roi_par = new PolygonRoi(wandCh1.xpoints, wandCh1.ypoints, wandCh1.npoints, Roi.POLYGON);
+					ovCh.addElement(roi_par);
+					
+					// im.setOverlay(roi_par,blue_color,3,blue_color);
+				}
+			}
+		}
+		Wand wandCh2 = new Wand(ipCh2Mask);
+		for (int u = 0; u < M; u++) {
+			for (int v = 0; v < N; v++) {
+				int p = ipCh2Mask.get(u, v);
+				if (p == 255) {
+					wandCh2.autoOutline(u, v, 255, 255);
+					PolygonRoi roi_par = new PolygonRoi(wandCh2.xpoints, wandCh2.ypoints, wandCh2.npoints, Roi.POLYGON);
+					ovCh.addElement(roi_par);
+					// im.setOverlay(roi_par,red_color,3,red_color);
+				}
+			}
+		}
+		return ovCh;
 
 	}
 
