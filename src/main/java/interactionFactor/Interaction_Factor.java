@@ -667,7 +667,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 			double percOverlaps = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
 
-			if (percOverlaps > ch2Percentage){
+			if (percOverlaps >= ch2Percentage){
 				countForPval +=1;
 			}
 			if (simImageOption){

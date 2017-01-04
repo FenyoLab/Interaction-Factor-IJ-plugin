@@ -387,7 +387,7 @@ public class Interaction_Factor_Sims implements PlugIn {
              
  			double percOverlaps = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
  			
- 			if (percOverlaps > ch2Percentage){
+ 			if (percOverlaps >= ch2Percentage){
  				countForPval +=1;
  			}
  		}
