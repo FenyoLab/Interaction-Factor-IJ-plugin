@@ -23,6 +23,7 @@ import ij.io.DirectoryChooser;
 import ij.io.FileSaver;
 import java.awt.event.*;
 import java.awt.Color;
+import ij.gui.ProgressBar;
 
 public class Interaction_Factor implements PlugIn, DialogListener {
 
@@ -70,6 +71,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 				{
 					//Execute IF code here
 					//IJ.log("Running IF...");
+					
 					run_IF(gd);
 				}
 				if(command == "Apply Overlay")
@@ -339,7 +341,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 		if (gd.wasCanceled())
 			return;
-
+		ImageJ thisImageJ = IJ.getInstance();
+		ProgressBar progressBar = thisImageJ.getProgressBar();
+		progressBar.show(0.0, true);
 		run_IF(gd);
 		
 		//gd.centerDialog(true);
@@ -349,7 +353,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 	private void run_IF(GenericDialog gd)
 	{
-		//get options
+		
+		IJ.showProgress(0.0);
+		
+		//get options	
 		Choice choice0 = (Choice) gd.getChoices().get(0);
 		int ch1Color = choice0.getSelectedIndex();
 		Choice choice1 = (Choice) gd.getChoices().get(1);
@@ -638,7 +645,13 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		double countForPval = 0;
 
 		for (int i = 0; i < nMaxSimulations; i++) {
+			IJ.showProgress(i, 50);
+			
+			
 			String nSimulation = Integer.toString(i+1);
+			IJ.showStatus("Running IF..."+nSimulation+"/50");
+			//IJ.log("Running IF..."+nSimulation+"/50");
+			
 			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
 
 			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1Random, ch2ClustersProbs,
@@ -791,6 +804,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			overlapIm.setCalibration(cal);
 			overlapIm.show();
 		}
+		IJ.showProgress(1.0);
 
 	}
 
@@ -817,8 +831,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		new ImageJ();
 
 		// open sample
-		ImagePlus nucleus = IJ.openImage("/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/ROIs/Result of 1 Reconstruction-1.tif");
-		ImagePlus image = IJ.openImage("/Users/keriabermudez/Dropbox/Projects/Dylans/Dylan_NEW/raw images and masks/pDNA-PKcs+LigIV+Ku80/0D/images/Result of 1 Reconstruction.tif");
+		ImagePlus nucleus = IJ.openImage(
+				"/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/Cells/cell-1_1/cell-1_1_ROI.tif");
+		ImagePlus image = IJ.openImage(
+				"/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/Cells/cell-1_1/cell-1_1_R_G.tif");
 		image.show();
 		nucleus.show();
 

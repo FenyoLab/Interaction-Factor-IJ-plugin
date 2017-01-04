@@ -48,9 +48,9 @@ public class Interaction_Factor_Sims implements PlugIn {
         //Dialog
         GenericDialog gd = new GenericDialog("Interaction Factor");
         gd.addMessage("----------- Segmentation -----------");
-        gd.addChoice("Threshold_Algorithm:", thMethods, thMethods[thMethodInt]);
         gd.addChoice("Channel_1_(Ch1)_Color:", channels, channels[ch1Color]);
         gd.addChoice("Channel_2_(Ch2)_Color:", channels, channels[ch2Color]);
+        gd.addChoice("Threshold_Algorithm:", thMethods, thMethods[thMethodInt]);
         gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
         gd.addMessage("------- Simulation Parameters ------");
         gd.addRadioButtonGroup("Ch1 Simulation:", simParametersCh1, 3, 1, ch1SimParam);
@@ -71,9 +71,10 @@ public class Interaction_Factor_Sims implements PlugIn {
 
         AutoThresholder.Method[] methods = AutoThresholder.Method.values();
 
-        thMethodInt = gd.getNextChoiceIndex();
+        
         ch1Color = gd.getNextChoiceIndex();
         ch2Color = gd.getNextChoiceIndex();
+        thMethodInt = gd.getNextChoiceIndex();
         ch1SimParam= gd.getNextRadioButton();
         ch2SimParam = gd.getNextRadioButton();
         interFactorCh2 =  gd.getNextNumber();
@@ -371,6 +372,7 @@ public class Interaction_Factor_Sims implements PlugIn {
  		double countForPval = 0;
  		
  		for (int i = 0; i < 50; i++) {
+ 			IJ.showProgress(i, 50+nMaxSimulations);
  			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
  			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1Random, ch2ClustersProbs,
  					ch2Clusters, ch2ClustersRect);
@@ -466,6 +468,7 @@ public class Interaction_Factor_Sims implements PlugIn {
             ImageProcessor ipCh1Random = ipCh1.duplicate();
 
             for (int i = 0; i < nMaxSimulations; i++) {
+            	IJ.showProgress(i+50, 50+nMaxSimulations);
                 String nSimulation = Integer.toString(i+1);
                 if (ch1SimParam == "Random"){ // if both are random
                     ipCh1Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch1Clusters,ch1ClustersRect);
