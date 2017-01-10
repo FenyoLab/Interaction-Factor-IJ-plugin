@@ -7,7 +7,6 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.gui.GenericDialog;
-import ij.gui.ImageCanvas;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
@@ -270,6 +269,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		int ch1Color = (int) Prefs.get(PREF_KEY + "ch1Color", 0);
 		int ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
 		boolean edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
+		boolean moveCh1Clusters = Prefs.get(PREF_KEY + "moveOption", true);
+
+		
 		
 		//Measurement Options
 		boolean sumIntOption =  Prefs.get(PREF_KEY + "sumIntOption", true);
@@ -296,6 +298,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.addChoice("Channe2(Ch2)_Color:", channels, channels[ch2Color]);
 		gd.addChoice("Threshold:", thMethods, thMethods[thMethodInt]);
 		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
+		gd.addCheckbox("Move_Ch1_Clus", moveCh1Clusters);
+
 		//gd.setInsets(5, 0, 0);
 
 		// ***** Apply and Remove Overlay Buttons *****
@@ -376,25 +380,29 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		Checkbox check8 = (Checkbox) checkboxes.get(8);
 		Checkbox check9 = (Checkbox) checkboxes.get(9);
 		Checkbox check10 = (Checkbox) checkboxes.get(10);
+		Checkbox check11 = (Checkbox) checkboxes.get(11);
 
 
 		boolean edgeOption = check0.getState();
-		boolean sumIntOption = check1.getState();
-		boolean sumIntThOption = check2.getState();
-		boolean meanIntThOption = check3.getState();
-		boolean areaOption = check4.getState();
-		boolean simImageOption = check5.getState();
-		boolean ch1MaskOption = check6.getState();
-		boolean ch2MaskOption = check7.getState();
-		boolean roiMaskOption = check8.getState();
-		boolean overlapMaskOption = check9.getState();
-		boolean overlapLocations = check10.getState();;
+		boolean moveCh1Clusters = check1.getState();
+		boolean sumIntOption = check2.getState();
+		boolean sumIntThOption = check3.getState();
+		boolean meanIntThOption = check4.getState();
+		boolean areaOption = check5.getState();
+		boolean simImageOption = check6.getState();
+		boolean ch1MaskOption = check7.getState();
+		boolean ch2MaskOption = check8.getState();
+		boolean roiMaskOption = check9.getState();
+		boolean overlapMaskOption = check10.getState();
+		boolean overlapLocations = check11.getState();;
 		
 		// set options
 		Prefs.set(PREF_KEY + "ch1Color", ch1Color);
 		Prefs.set(PREF_KEY + "ch2Color", ch2Color);
 		Prefs.set(PREF_KEY + "thMethodInt", thMethodInt);
 		Prefs.set(PREF_KEY + "edgeOption", edgeOption);
+		Prefs.set(PREF_KEY + "moveOption", moveCh1Clusters);
+
 		Prefs.set(PREF_KEY + "sumIntOption", sumIntOption);
 		Prefs.set(PREF_KEY + "sumIntThOption", sumIntThOption);
 		Prefs.set(PREF_KEY + "meanIntThOption", meanIntThOption);
@@ -496,7 +504,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 		boolean hasMask = (mask != null);
 		boolean hasRoi = (roiSelection != null);
-
+		
+		
 		if (hasMask) {
 			ipMask.insert(mask, roi.x, roi.y);
 			// method to insert another ip inside an ip does not work with
@@ -515,10 +524,15 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					ipCh2.putPixel(u, v, 0);
 					ipCh3.putPixel(u, v, 0);
 				}
-
 			}
 		}
-
+		//Area ROI
+		double aRoi  = 0;
+		if (hasMask || hasRoi){
+			ipCh1.setMask(ipMask);
+			ImageStatistics roiStats = ipCh1.getStatistics();
+			aRoi = (double) roiStats.pixelCount * calConvert;
+		}
 		ImageProcessor ipCh1Mask = ipCh1.duplicate();
 		ImageProcessor ipCh2Mask = ipCh2.duplicate();
 
@@ -604,6 +618,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		ImageStatistics ch1Stats = ipCh1.getStatistics();
 		double aCh1Pixels = (double) ch1Stats.pixelCount * calConvert;
 
+		
+		
 		// Overlap
 		ipCh1.setMask(ipOverlaps);
 		ImageStatistics overlapStats = ipCh1.getStatistics();
@@ -651,18 +667,23 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			String nSimulation = Integer.toString(i+1);
 			IJ.showStatus("Running IF..."+nSimulation+"/50");
 			//IJ.log("Running IF..."+nSimulation+"/50");
-			
-			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
-
-			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1Random, ch2ClustersProbs,
+			ImageProcessor ipCh1Random;
+			if (moveCh1Clusters){
+				 ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
+			}
+			else{
+				 ipCh1Random = ipCh1.duplicate();
+			}
+			//generate ch1 channel mask
+			ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
+			ipCh1RandomMask.threshold(th_ch1);
+			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1RandomMask, ch2ClustersProbs,
 					ch2Clusters, ch2ClustersRect);
 			//generate ch2 channel mask
 			ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
 			ipCh2RandomMask.threshold(th_ch2);
 
-			//generate ch1 channel mask
-			ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
-			ipCh1RandomMask.threshold(th_ch1);
+			
 			int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask); // check this maybe replace with  fs.ch2ClusterOverlaps(ipCh1Mask, ipCh2Mask)
 
 			double percOverlaps = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
@@ -752,6 +773,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		summary.addValue(channels[ch2Color] + "% Overlaps", ch2Percentage*100);
 		summary.addValue("Overlap Count", overlapCount);
 		summary.addValue("Overlap Area", aOverlapPixels);
+		summary.addValue("ROI area", aRoi);
 
 		//Segmentation
 		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
