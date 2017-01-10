@@ -298,7 +298,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.addChoice("Channe2(Ch2)_Color:", channels, channels[ch2Color]);
 		gd.addChoice("Threshold:", thMethods, thMethods[thMethodInt]);
 		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
-		gd.addCheckbox("Move_Ch1_Clus", moveCh1Clusters);
+		gd.addCheckbox("Move_Ch1_Clusters", moveCh1Clusters);
 
 		//gd.setInsets(5, 0, 0);
 
