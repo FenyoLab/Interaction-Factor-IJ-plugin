@@ -639,8 +639,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		double ch1Percentage = (double) ch1Overlaps / (double) ch1ClusterCount;
 
 		//Average Mean intensity
-		double ch1MeanInt = (double)ch1SumIntensity/ch1Stats.pixelCount;
-		double ch2MeanInt = (double)ch2SumIntensity/ch2Stats.pixelCount;
+		double ch1MeanInt = ch1Stats.mean;
+		double ch2MeanInt = ch2Stats.mean;
 
 		// Calculating IF
 

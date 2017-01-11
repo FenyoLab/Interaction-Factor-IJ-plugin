@@ -1,10 +1,13 @@
 package interactionFactor;
 
 import ij.IJ;
+import ij.gui.DialogListener;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.Prefs;
 import ij.gui.GenericDialog;
+import ij.gui.NonBlockingGenericDialog;
+import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
@@ -13,20 +16,213 @@ import ij.plugin.filter.Analyzer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+
 import ij.measure.Calibration;
 import java.lang.Math;
 
-public class Interaction_Factor_Sims implements PlugIn {
+public class Interaction_Factor_Sims implements PlugIn, DialogListener {
+	
 	private static String[] thMethods = AutoThresholder.getMethods();
     private static  String[] channels = {"Red", "Green", "Blue"};
     private static  String[] simParametersCh1 = {"None", "Random"};
-    private static  String[] simParametersCh2 = {"Random", "Non Random"};
+    private static  String[] simParametersCh2 = {"Random", "Non-Random"};
+	
+    private AutoThresholder.Method[] methods;
 
     private static int nMaxSimulations = 0;
-    //private static double interFactorCh1 = 0;
-    //private static double interFactorCh2 = 0;
     protected final static String PREF_KEY = "Interaction_Factor_Sims.";
+    
+    public Interaction_Factor_Sims() {
+		thMethods = AutoThresholder.getMethods();
+
+		methods = AutoThresholder.Method.values();
+
+	}
+    
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
+	{
+		if(e != null)
+		{
+			if(e.getID() == 1001)
+			{
+				ActionEvent e_ = (ActionEvent) e;
+				String command = e_.getActionCommand();
+				if(command == "Apply Overlay")
+				{
+					IJ.log("Apply Overlay");
+					//IJ.run("Remove Overlay");
+					//choices
+					Choice choice0 = (Choice) gd.getChoices().get(0);
+					int ch1Color = choice0.getSelectedIndex();
+					
+					Choice choice1 = (Choice) gd.getChoices().get(1);
+					int ch2Color = choice1.getSelectedIndex();
+					
+					Choice choice2 = (Choice) gd.getChoices().get(2);
+					int thMethodInt = choice2.getSelectedIndex();
+					
+					//checkbox
+					Vector checkboxes = gd.getCheckboxes();
+					Checkbox check0 = (Checkbox) checkboxes.get(0);
+					boolean edgeOption = check0.getState();
+
+					IfFunctions fs = new IfFunctions();
+
+					ImagePlus im = IJ.getImage();
+
+					if (im.getType() != ImagePlus.COLOR_RGB) {
+						IJ.error("RGB image required");
+						
+					}
+
+					if (ch1Color == ch2Color) {
+						IJ.error("Channel Colors are the same. Choose another channel");
+				
+					}
+
+					AutoThresholder.Method method = methods[thMethodInt];
+
+
+					ImageProcessor ip = im.getProcessor();
+					Rectangle roi = ip.getRoi();
+					Roi roiSelection = im.getRoi();
+
+					ImageProcessor mask = im.getMask();// ip for the roi mask but only with
+					// surrounding box
+
+					int M = ip.getWidth();
+					int N = ip.getHeight();
+					int size = M * N;
+
+					byte[] red = new byte[size];
+					byte[] green = new byte[size];
+					byte[] blue = new byte[size];
+
+					((ColorProcessor) ip).getRGB(red, green, blue);
+
+					ImageProcessor ipCh1 = new ByteProcessor(M, N); // ip for ch1 mask
+					ImageProcessor ipCh2 = new ByteProcessor(M, N); // ip for ch2 mask
+					ImageProcessor ipCh3 = new ByteProcessor(M, N); // ip for ch1 mask
+					// mask
+					ImageProcessor ipMask = new ByteProcessor(M, N); // ip for roi mask
+
+					byte[] ch3;
+
+					// Color of Ch1
+					if (ch1Color == 0) {
+						ipCh1.setPixels(red);
+					} else if (ch1Color == 1) {
+						ipCh1.setPixels(green);
+					} else {
+						ipCh1.setPixels(blue);
+					}
+					// Color of Ch2
+					if (ch2Color == 0) {
+						ipCh2.setPixels(red);
+					} else if (ch2Color == 1) {
+						ipCh2.setPixels(green);
+					} else {
+						ipCh2.setPixels(blue);
+					}
+					// Color of Ch3
+					if (ch1Color + ch2Color == 1) {
+						ipCh3.setPixels(blue);
+						ch3 = blue;
+					} else if (ch1Color + ch2Color == 2) {
+						ipCh3.setPixels(green);
+						ch3 = green;
+					} else {
+						ipCh3.setPixels(red);
+						ch3 = red;
+					}
+
+					boolean hasMask = (mask != null);
+					boolean hasRoi = (roiSelection != null);
+
+					if (hasMask) {
+						ipMask.insert(mask, roi.x, roi.y);
+						// method to insert another ip inside an ip does not work with
+						// rectangular rois
+					} else {
+						ipMask.setValue(255);
+						ipMask.setRoi(roi);
+						ipMask.fill();
+					}
+
+					for (int u = 0; u < M; u++) {
+						for (int v = 0; v < N; v++) {
+							int p = ipMask.getPixel(u, v);
+							if (p == 0) {
+								ipCh1.putPixel(u, v, 0);
+								ipCh2.putPixel(u, v, 0);
+								ipCh3.putPixel(u, v, 0);
+							}
+
+						}
+					}
+
+					ImageProcessor ipCh1Mask = ipCh1.duplicate();
+					ImageProcessor ipCh2Mask = ipCh2.duplicate();
+
+					AutoThresholder autoth = new AutoThresholder();
+
+					// Threshold ch1 channel
+					ipCh1Mask.setMask(ipMask);
+					int[] ch1_hist = ipCh1Mask.getHistogram();
+					int th_ch1 = autoth.getThreshold(method, ch1_hist);
+					ipCh1Mask.threshold(th_ch1);
+
+					// Threshold ch2 channel
+
+					ipCh2Mask.setMask(ipMask);
+					int[] ch2_hist = ipCh2Mask.getHistogram();
+					int th_ch2 = autoth.getThreshold(method, ch2_hist);
+					ipCh2Mask.threshold(th_ch2);
+					
+					IJ.setThreshold(im, th_ch2, 255,"Red");
+					im.updateAndDraw();
+					
+					if (edgeOption) {
+						if (hasRoi) {
+							fs.excludeEdgesRoi(roiSelection, ipMask, ipCh1Mask);
+							fs.excludeEdgesRoi(roiSelection, ipMask, ipCh2Mask);
+						} else {
+							fs.excludeEdges(roi, ipMask, ipCh1Mask);
+							fs.excludeEdges(roi, ipMask, ipCh2Mask);
+						}
+					}
+					
+					//fs.setClustersOverlay(im, ipCh1Mask,  ipCh2Mask);
+					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
+					Color stColor = Color.WHITE;
+					Color fColor = new Color((float)1.0,(float)1.0,(float)1.0,(float)1.0);
+					//chsOverlays.setFillColor(fColor);
+					chsOverlays.setStrokeColor(stColor);
+					im.setOverlay(chsOverlays);
+
+				}
+				if(command == "Clear Overlay")
+				{
+					//IJ.log("Clear Overlay");
+					//IJ.run("Remove Overlay");
+					ImagePlus im = IJ.getImage();
+					//im.setHideOverlay(true);
+					IJ.run("Remove Overlay");
+				}
+			}
+		}
+		else
+		{
+
+			gd.repaint();
+			//IJ.log("Started IF Plugin...");
+		}
+			return true;
+		}
+		
 
 	public void run(String arg) {
 		
@@ -34,10 +230,11 @@ public class Interaction_Factor_Sims implements PlugIn {
         int ch1Color =  (int) Prefs.get(PREF_KEY + "ch1Color", 0);
         int ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
         String ch1SimParam= Prefs.get(PREF_KEY + "ch1SimParam", simParametersCh1[0]);;
-        String ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[0]);
+        String ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[1]);
         double interFactorCh2 =  Prefs.get(PREF_KEY + "interFactorCh2", 0);
         nMaxSimulations = (int) Prefs.get(PREF_KEY + "nMaxSimulations", nMaxSimulations);
         boolean edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
+		boolean moveCh1Clusters = Prefs.get(PREF_KEY + "moveOption", true);
         boolean simImageOption = Prefs.get(PREF_KEY + "simImageOption", false);
         boolean ch1MaskOption = Prefs.get(PREF_KEY + "ch1MaskOption", false);
         boolean ch2MaskOption =  Prefs.get(PREF_KEY + "ch2MaskOption", false);
@@ -46,16 +243,36 @@ public class Interaction_Factor_Sims implements PlugIn {
         boolean overlapLocations =  Prefs.get(PREF_KEY + "overlapLocations", false);
 		
         //Dialog
-        GenericDialog gd = new GenericDialog("Interaction Factor");
+        
+        GenericDialog gd = new NonBlockingGenericDialog("Interaction Factor Simulations");
+        gd.addDialogListener((DialogListener)this);
+        
         gd.addMessage("----------- Segmentation -----------");
         gd.addChoice("Channel_1_(Ch1)_Color:", channels, channels[ch1Color]);
         gd.addChoice("Channel_2_(Ch2)_Color:", channels, channels[ch2Color]);
         gd.addChoice("Threshold_Algorithm:", thMethods, thMethods[thMethodInt]);
         gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
+        gd.addCheckbox("Move_Ch1_Clusters", moveCh1Clusters);
+        
+        // ***** Apply and Remove Overlay Buttons *****
+        
+ 		Panel buttons = new Panel();
+ 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+ 		Button b1 = new Button("Apply Overlay");
+ 		b1.addActionListener(gd);
+ 		b1.addKeyListener(gd);
+ 		buttons.add(b1);
+ 		Button b2 = new Button("Clear Overlay");
+ 		b2.addActionListener(gd);
+ 		b2.addKeyListener(gd);
+ 		buttons.add(b2);
+ 		gd.addPanel(buttons, GridBagConstraints.CENTER, new Insets(15,0,0,0));
+ 		// *****
+        
         gd.addMessage("------- Simulation Parameters ------");
-        gd.addRadioButtonGroup("Ch1 Simulation:", simParametersCh1, 3, 1, ch1SimParam);
-        gd.addRadioButtonGroup("Ch2 Simulation:", simParametersCh2, 3, 1, ch2SimParam);
-        gd.addNumericField("Ch2_Interaction_Factor", interFactorCh2, 0);
+        gd.addRadioButtonGroup("Ch1 Simulation:", simParametersCh1, 2, 1, ch1SimParam);
+        gd.addRadioButtonGroup("Ch2 Simulation:", simParametersCh2, 2, 1, ch2SimParam);
+        gd.addNumericField("Ch2_Interaction_Factor", 0, 2);
         gd.addNumericField("Number_of_Simulations:", nMaxSimulations, 0);
         gd.addMessage("-------------- Output --------------");
         gd.addCheckbox("Simulation", simImageOption);
@@ -80,6 +297,7 @@ public class Interaction_Factor_Sims implements PlugIn {
         interFactorCh2 =  gd.getNextNumber();
         nMaxSimulations = (int) gd.getNextNumber();
         edgeOption = gd.getNextBoolean();
+        moveCh1Clusters = gd.getNextBoolean();
         simImageOption = gd.getNextBoolean();
         ch1MaskOption =gd.getNextBoolean();
         ch2MaskOption = gd.getNextBoolean();
@@ -97,6 +315,7 @@ public class Interaction_Factor_Sims implements PlugIn {
         Prefs.set(PREF_KEY+"interFactorCh2", interFactorCh2);
         Prefs.set(PREF_KEY+"nMaxSimulations", nMaxSimulations);
         Prefs.set(PREF_KEY+"edgeOption", edgeOption);
+		Prefs.set(PREF_KEY + "moveOption", moveCh1Clusters);
         Prefs.set(PREF_KEY+"simImageOption", simImageOption);
         Prefs.set(PREF_KEY+"ch1MaskOption", ch1MaskOption);
         Prefs.set(PREF_KEY+"ch2MaskOption", ch2MaskOption);
@@ -116,41 +335,23 @@ public class Interaction_Factor_Sims implements PlugIn {
             return;
         }
         
-        /*double interFactorCh1 = 2.0;
-        //  number of simulations is greater than 1 then at least one simulation needs to be either random
-        if (ch1SimParam == simParametersCh1[0]){ //if there are no random simulations
-            interFactorCh1 = 2.0;
-        }
-        else if (ch1SimParam == simParametersCh1[1]){ // random simulations
-            interFactorCh1 = 0;
-        }
-        
-        if (ch2SimParam == simParametersCh2[0]){
-            interFactorCh2 = 2.0;
-        }
-        else if (ch2SimParam == simParametersCh2[1]){
-            interFactorCh2 = 0.0;
-        }
-        else if(ch2SimParam == simParametersCh2[2]){
+        if(ch2SimParam == "Non-Random"){
             if (interFactorCh2 >= 1.0){
-                IJ.error("Attraction Factor has to less than 1");
+                IJ.error("Interaction Factor has to be less than 1");
                 return;
-            }
-        }*/
-
-        //if attraction Factor for ch2 is greater than one then attraction factor for ch1 has to be <= to one, if not error
-        /*if (interFactorCh2 > 0 && interFactorCh2 < 1 && interFactorCh1 > 0 && interFactorCh1 < 1){
-            IJ.error("Change parameters. If one channel is Non Random the other cannot be Non Random");
-            return;
-        }
-        if (nMaxSimulations == 0 && (interFactorCh2 + interFactorCh1) > 0){
+                }
+            
+            else if (interFactorCh2 == 0.0) {
+            	 IJ.error("Interaction Factor has to be greater than 0");
+                 return;
+			}
+         }
+        
+        if (nMaxSimulations == 0 ){
             IJ.error("Indicate the number of simulations");
             return;
         }
-        if (nMaxSimulations > 0 && (interFactorCh2 + interFactorCh1) == 0){
-            IJ.error("Indicate Simulation Parameters");
-            return;
-        }*/
+        
 
         String name = im.getShortTitle();
         AutoThresholder.Method method = methods[thMethodInt];
@@ -243,6 +444,14 @@ public class Interaction_Factor_Sims implements PlugIn {
 
             }
         }
+        
+        //Area ROI
+  		double aRoi  = 0;
+  		if (hasMask || hasRoi){
+  			ipCh1.setMask(ipMask);
+  			ImageStatistics roiStats = ipCh1.getStatistics();
+  			aRoi = (double) roiStats.pixelCount * calConvert;
+  		}
 
         ImageProcessor ipCh1Mask = ipCh1.duplicate();
         ImageProcessor ipCh2Mask = ipCh2.duplicate();
@@ -334,6 +543,7 @@ public class Interaction_Factor_Sims implements PlugIn {
         ipCh1.setMask(ipCh1Mask);
         ImageStatistics ch1Stats = ipCh1.getStatistics();
         double aCh1Pixels = (double) ch1Stats.pixelCount *calConvert;
+        
 
         //Overlap
         ipCh1.setMask(ipOverlaps);
@@ -351,8 +561,8 @@ public class Interaction_Factor_Sims implements PlugIn {
       	double ch2Percentage = (double) ch2Overlaps / (double) ch2ClusterCount;
        
       	//Average Mean intensity
-      	double ch1MeanInt = (double)ch1SumIntensity/ch1Stats.pixelCount;
-      	double ch2MeanInt = (double)ch2SumIntensity/ch2Stats.pixelCount;
+      	double ch1MeanInt = ch1Stats.mean;
+      	double ch2MeanInt = ch2Stats.mean;
       	
        //Calculating IF
 
@@ -373,17 +583,26 @@ public class Interaction_Factor_Sims implements PlugIn {
  		
  		for (int i = 0; i < 50; i++) {
  			IJ.showProgress(i, 50+nMaxSimulations);
- 			ImageProcessor ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
- 			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1Random, ch2ClustersProbs,
+ 			
+ 			ImageProcessor ipCh1Random;
+ 			
+ 			if (moveCh1Clusters){
+				 ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
+			}
+			else{
+				 ipCh1Random = ipCh1.duplicate();
+			}
+ 			
+ 			//generate ch1 channel mask
+            ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
+            ipCh1RandomMask.threshold(th_ch1);
+ 			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1RandomMask, ch2ClustersProbs,
  					ch2Clusters, ch2ClustersRect);
- 			 //generate ch2 channel mask
-             ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
-             ipCh2RandomMask.threshold(th_ch2);
+ 			//generate ch2 channel mask
+            ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
+            ipCh2RandomMask.threshold(th_ch2);
 
-             //generate ch1 channel mask
-             ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
-             ipCh1RandomMask.threshold(th_ch1);
-             int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask);
+            int ch2RandomOverlaps = fs.overlapCount(ipCh2RandomMask, ipCh1RandomMask);
              
  			double percOverlaps = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
  			
@@ -424,7 +643,8 @@ public class Interaction_Factor_Sims implements PlugIn {
         summary.addValue(channels[ch2Color]+" %Overlaps",ch2Percentage*100);
         summary.addValue("Overlap Count",overlapCount);
         summary.addValue("Overlap Area",aOverlapPixels);
-        
+		summary.addValue("ROI area", aRoi);
+
         //Segmentation
         summary.addValue("Th Algorithm",thMethods[thMethodInt]);
         summary.addValue(channels[ch1Color]  +" Th",th_ch1);
@@ -474,9 +694,10 @@ public class Interaction_Factor_Sims implements PlugIn {
                     ipCh1Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch1Clusters,ch1ClustersRect);
                 } 
                 if(ch2SimParam == "Random") { //ch1 is random and ch2 is nonrandom
+                	interFactorCh2 = 0;
                     ipCh2Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch2Clusters,ch2ClustersRect);
                 }
-                else if(ch2SimParam == "Non Random"){
+                else if(ch2SimParam == "Non-Random"){
                     ipCh2Random = fs.simNonRandom(ipMask,minX,maxX,minY,maxY,ipCh1Random,ch2Clusters,ch2ClustersRect,interFactorCh2,th_ch1);
                 }
                 if (ipCh2Random == null || ipCh1Random == null){
@@ -545,26 +766,6 @@ public class Interaction_Factor_Sims implements PlugIn {
                 ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
                 ipCh1RandomMask.threshold(th_ch1);
 
-                /*//EXCLUDE EDGES
-                if (edgeOption) {
-                    if (hasRoi){
-                        excludeEdgesRoi(roiSelection,ipMask, ipCh1RandomMask);
-                        excludeEdgesRoi(roiSelection,ipMask, ipCh2RandomMask);
-                    }
-                    else{
-                        excludeEdges(roi,ipMask,ipCh1RandomMask);
-                        excludeEdges(roi,ipMask,ipCh2RandomMask);
-                    }
-                }*/
-
-                //Ch1 clusters
-
-               //int ch1RandomClusterCount = fs.clustersProcessingSimple(ipCh1RandomMask);
-
-                //Ch2 clusters
-
-                //int ch2RandomClusterCount = fs.clustersProcessingSimple(ipCh2RandomMask);
-
                 //generate overlap mask
                 ImageProcessor ipOverlapsRandom = new ByteProcessor(M, N);
                 ipOverlapsRandom.copyBits(ipCh1RandomMask, 0, 0, Blitter.COPY);
@@ -620,7 +821,7 @@ public class Interaction_Factor_Sims implements PlugIn {
 
                 }
                 else {
-                    summary.addValue(channels[ch2Color] + " Sim", "Non Random");
+                    summary.addValue(channels[ch2Color] + " Sim", "Non-Random");
                     summary.addValue(channels[ch1Color]+ "-" +channels[ch2Color]+" IF", interFactorCh2);
                     //summary.addValue(channels[ch2Color]  +" IF", interFactorCh2);
                     }
@@ -639,6 +840,7 @@ public class Interaction_Factor_Sims implements PlugIn {
                 summary.addValue(channels[ch2Color]+" Cluster Count", ch2ClusterCount);
                 //Overlap Measurement
                 summary.addValue("Overlap Area", aOverlapRandomPixels);
+                summary.addValue("ROI area", aRoi);
                 summary.addValue("Overlap Count", oRandomCount);
                 summary.addValue(channels[ch1Color]+" Overlaps",ch1RandomOverlaps);
                 summary.addValue(channels[ch1Color]+" %Overlaps",ch1PercentageRandom*100);
