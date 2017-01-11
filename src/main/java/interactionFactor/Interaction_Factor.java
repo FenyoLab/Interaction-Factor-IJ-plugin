@@ -286,7 +286,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		boolean roiMaskOption = Prefs.get(PREF_KEY + "roiMaskOption", false);
 		boolean overlapMaskOption = Prefs.get(PREF_KEY + "overlapMaskOption", false);
 		boolean overlapLocations = Prefs.get(PREF_KEY + "overlapLocations", false);
-		String imagedir =  Prefs.get(PREF_KEY +"imagedir",Prefs.getDefaultDirectory());
 		
 
 		// Dialog

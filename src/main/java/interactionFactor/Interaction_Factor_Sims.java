@@ -28,7 +28,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 	private static String[] thMethods = AutoThresholder.getMethods();
     private static  String[] channels = {"Red", "Green", "Blue"};
     private static  String[] simParametersCh1 = {"None", "Random"};
-    private static  String[] simParametersCh2 = {"Random", "Non-Random"};
+    private static  String[] simParametersCh2 = {"Random", "Non Random"};
 	
     private AutoThresholder.Method[] methods;
 
@@ -37,9 +37,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
     
     public Interaction_Factor_Sims() {
 		thMethods = AutoThresholder.getMethods();
-
 		methods = AutoThresholder.Method.values();
-
 	}
     
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e)
@@ -52,7 +50,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 				String command = e_.getActionCommand();
 				if(command == "Apply Overlay")
 				{
-					IJ.log("Apply Overlay");
+					
 					//IJ.run("Remove Overlay");
 					//choices
 					Choice choice0 = (Choice) gd.getChoices().get(0);
@@ -229,8 +227,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		int thMethodInt = (int) Prefs.get(PREF_KEY + "thMethodInt",0);
         int ch1Color =  (int) Prefs.get(PREF_KEY + "ch1Color", 0);
         int ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
-        String ch1SimParam= Prefs.get(PREF_KEY + "ch1SimParam", simParametersCh1[0]);;
-        String ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[1]);
+        String ch1SimParam= Prefs.get(PREF_KEY + "ch1SimParam", simParametersCh1[0]);
+        String ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[0]);
         double interFactorCh2 =  Prefs.get(PREF_KEY + "interFactorCh2", 0);
         nMaxSimulations = (int) Prefs.get(PREF_KEY + "nMaxSimulations", nMaxSimulations);
         boolean edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
@@ -247,7 +245,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         GenericDialog gd = new NonBlockingGenericDialog("Interaction Factor Simulations");
         gd.addDialogListener((DialogListener)this);
         
-        gd.addMessage("----------- Segmentation -----------");
+        gd.addMessage("----------- Segmentation -----------\n");
         gd.addChoice("Channel_1_(Ch1)_Color:", channels, channels[ch1Color]);
         gd.addChoice("Channel_2_(Ch2)_Color:", channels, channels[ch2Color]);
         gd.addChoice("Threshold_Algorithm:", thMethods, thMethods[thMethodInt]);
@@ -269,12 +267,14 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
  		gd.addPanel(buttons, GridBagConstraints.CENTER, new Insets(15,0,0,0));
  		// *****
         
-        gd.addMessage("------- Simulation Parameters ------");
+        gd.addMessage("------- Simulation Parameters ------\n");
         gd.addRadioButtonGroup("Ch1 Simulation:", simParametersCh1, 2, 1, ch1SimParam);
         gd.addRadioButtonGroup("Ch2 Simulation:", simParametersCh2, 2, 1, ch2SimParam);
         gd.addNumericField("Ch2_Interaction_Factor", 0, 2);
         gd.addNumericField("Number_of_Simulations:", nMaxSimulations, 0);
-        gd.addMessage("-------------- Output --------------");
+        
+        
+        gd.addMessage("-------------- Output --------------\n");
         gd.addCheckbox("Simulation", simImageOption);
         gd.addCheckbox("Ch1_Mask", ch1MaskOption);
         gd.addCheckbox("Ch2_Mask",ch2MaskOption);
@@ -292,12 +292,15 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         ch1Color = gd.getNextChoiceIndex();
         ch2Color = gd.getNextChoiceIndex();
         thMethodInt = gd.getNextChoiceIndex();
+        
         ch1SimParam= gd.getNextRadioButton();
         ch2SimParam = gd.getNextRadioButton();
+        
         interFactorCh2 =  gd.getNextNumber();
         nMaxSimulations = (int) gd.getNextNumber();
         edgeOption = gd.getNextBoolean();
         moveCh1Clusters = gd.getNextBoolean();
+        
         simImageOption = gd.getNextBoolean();
         ch1MaskOption =gd.getNextBoolean();
         ch2MaskOption = gd.getNextBoolean();
@@ -335,7 +338,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             return;
         }
         
-        if(ch2SimParam == "Non-Random"){
+        if(ch2SimParam == "Non Random"){
             if (interFactorCh2 >= 1.0){
                 IJ.error("Interaction Factor has to be less than 1");
                 return;
@@ -697,7 +700,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
                 	interFactorCh2 = 0;
                     ipCh2Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch2Clusters,ch2ClustersRect);
                 }
-                else if(ch2SimParam == "Non-Random"){
+                else if(ch2SimParam == "Non Random"){
                     ipCh2Random = fs.simNonRandom(ipMask,minX,maxX,minY,maxY,ipCh1Random,ch2Clusters,ch2ClustersRect,interFactorCh2,th_ch1);
                 }
                 if (ipCh2Random == null || ipCh1Random == null){
@@ -821,7 +824,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 
                 }
                 else {
-                    summary.addValue(channels[ch2Color] + " Sim", "Non-Random");
+                    summary.addValue(channels[ch2Color] + " Sim", "Non Random");
                     summary.addValue(channels[ch1Color]+ "-" +channels[ch2Color]+" IF", interFactorCh2);
                     //summary.addValue(channels[ch2Color]  +" IF", interFactorCh2);
                     }
