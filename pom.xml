@@ -35,7 +35,7 @@
 
 
 	<properties>
-		<main-class>Interaction_Factor_Package-v0.1.1</main-class>
+		<main-class>Interaction_Factor_Package-v0.3.0</main-class>
 	</properties>
 
 	<dependencies>
