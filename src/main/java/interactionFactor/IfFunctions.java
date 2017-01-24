@@ -340,6 +340,173 @@ public class IfFunctions {
 
 		return ipSimulation;
 	}
+	
+	ImageProcessor simNonRandomOneOne(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
+		ImageProcessor ipCh1Random, List<ImageProcessor> ch2Clusters,
+		List<Rectangle> ch2ClustersRect, double interFactor,int th_other) {
+		
+		ImageProcessor chMaskFlood = ipCh1Random.duplicate();
+		Wand wand = new Wand(chMaskFlood);
+		
+		int M = roiMask.getWidth();
+		int N = roiMask.getHeight();
+		ImageProcessor ipSimulation = new ByteProcessor(M, N); // ip for ch2
+																// mask
+		for (int i = 0; i < ch2Clusters.size(); i++) {
+
+			Rectangle clusterRect = ch2ClustersRect.get(i);// ip for ch2 mask
+			ImageProcessor cluster = ch2Clusters.get(i);
+			int max = 100000;
+			int randomIter = 0;
+			boolean marked = false;
+
+			while (randomIter < max) {
+				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
+				// clusterRect.width);
+				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width + 1);
+				// int randomLeft = (int) ((float) Math.random() * (M -
+				// clusterRect.width));
+				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height + 1);
+				// int randomTop = (int) ((float) Math.random() * (N -
+				// clusterRect.height));
+				int randomRight = randomLeft + clusterRect.width;
+				int randomBottom = randomTop + clusterRect.height;
+
+				boolean overlapSelf = true;
+				boolean overlapOther = false;
+				int surrounding_pixels = 0;
+				
+				Outer:
+				for (int v = randomTop; v < randomBottom; v++) {
+					for (int u = randomLeft; u < randomRight; u++) {
+						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+							if (roiMask.getPixel(u, v) != 255) {
+								overlapSelf = true;
+								break Outer;
+							}
+							surrounding_pixels += ipSimulation.getPixel(u, v); // N
+																				// is
+																				// height
+																				// ,
+																				// M
+																				// is
+																				// width
+							if (u + 1 < maximumX) {
+								surrounding_pixels += ipSimulation.getPixel(u + 1, v);
+							}
+							if (u - 1 > minimumX) {
+								surrounding_pixels += ipSimulation.getPixel(u - 1, v);
+							}
+							if (v + 1 < maximumY) {
+								surrounding_pixels += ipSimulation.getPixel(u, v + 1);
+							}
+							if (v - 1 > minimumY) {
+								surrounding_pixels += ipSimulation.getPixel(u, v - 1);
+							}
+							if ((u + 1 < maximumX) && (v + 1 < maximumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u + 1, v + 1);
+							}
+							if ((u - 1 > minimumX) && (v - 1 > minimumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u - 1, v - 1);
+							}
+							if ((u - 1 > minimumX) && (v + 1 < maximumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u - 1, v + 1);
+							}
+							if ((u + 1 < maximumX) && (v - 1 > minimumY)) {
+								surrounding_pixels += ipSimulation.getPixel(u + 1, v - 1);
+							}
+							// checking surrounding pixels
+							if (surrounding_pixels == 0) {
+								overlapSelf = false;
+							} else {
+								overlapSelf = true;
+								break Outer;
+							}
+						}
+					}
+				}
+				if (overlapSelf == false) {
+					Outer:
+					for (int v = randomTop; v < randomBottom; v++) {
+						for (int u = randomLeft; u < randomRight; u++) {
+							if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+								int pOtherMarked  = chMaskFlood.getPixel(u, v);
+								if (pOtherMarked == 200) {
+									overlapSelf = true;
+									break Outer;// this could be changed
+								}
+								int pOther = ipCh1Random.getPixel(u, v);
+								if (pOther > th_other) {
+									overlapOther = true;
+									break Outer;// this could be changed
+								}
+								else{
+									overlapOther = false; // 
+									}
+							}
+						}
+					}
+				}
+				if (overlapSelf == false && overlapOther == true){
+					//change pixel
+                    for (int v = randomTop; v < randomBottom; v++) {
+                        for (int u = randomLeft; u < randomRight; u++) {
+                            if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+                            	if (marked == false){
+                            		int pOtherMarked  = chMaskFlood.getPixel(u, v);
+                            		if (pOtherMarked == 255){
+                            			wand.autoOutline(u, v, 255, 255);
+                    					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
+                    					// Then add the image processor of intensity to the list
+                    					chMaskFlood.setRoi(roi_par);
+                    					chMaskFlood.setValue(200);
+                    					chMaskFlood.fill(roi_par);
+                    					marked = true;
+                            		}
+                            		
+                            	}
+       
+                                int p = cluster.getPixel(u - randomLeft, v - randomTop);
+                                ipSimulation.putPixel(u, v, p);
+                            }
+                        }
+                    }
+                    randomIter = max; 
+				}
+				if (overlapSelf == false && overlapOther == false){
+                    double random =  Math.random();
+                    if (random  > interFactor){                 
+                        //change pixel
+                        for (int v = randomTop; v < randomBottom; v++) {
+                            for (int u = randomLeft; u < randomRight; u++) {
+                                if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+                                	if (marked == false){
+                                		int pOtherMarked  = chMaskFlood.getPixel(u, v);
+                                		if (pOtherMarked == 255){
+                                			wand.autoOutline(u, v, 255, 255);
+                        					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
+                        					// Then add the image processor of intensity to the list
+                        					chMaskFlood.setRoi(roi_par);
+                        					chMaskFlood.setValue(200);
+                        					chMaskFlood.fill(roi_par);
+                        					marked = true;
+                                		}
+                                	}
+                                	int p = cluster.getPixel(u - randomLeft, v - randomTop);
+                                    ipSimulation.putPixel(u, v, p);
+                                }
+                            }
+                        }
+                        randomIter = max;
+                    }
+				}
+				randomIter++;
+			}
+		}
+
+		return ipSimulation;
+	}
+
 
 	ImageProcessor simRandom(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
 			List<ImageProcessor> clusters, List<Rectangle> clustersRect) {
@@ -547,12 +714,15 @@ public class IfFunctions {
 	}
 
 	int ch2ClusterOverlaps(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
-		ImageProcessor ipFlood = ipCh2Mask.duplicate();
+		
+		int M = ipCh1Mask.getWidth();
+		int N = ipCh1Mask.getHeight();
+		
+		ImageProcessor ipFlood =  ipCh2Mask.duplicate();
 		Wand wand = new Wand(ipFlood);
 
 		int count = 0;
-		int M = ipCh1Mask.getWidth();
-		int N = ipCh1Mask.getHeight();
+		
 
 		for (int u = 0; u < M; u++) {
 			for (int v = 0; v < N; v++) {
@@ -573,7 +743,101 @@ public class IfFunctions {
 		}
 		return count;
 	}
+int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
+	    
+	    ImageProcessor ipCh1MaskTest = ipCh1Mask.duplicate();
+		int[] clusterStoich = new int[4];
+		
+		int oneToOne = 0;
+		int oneToTwo = 0;
+		int oneToThree = 0;
+		int oneToMore = 0;
+		
+		int M = ipCh1Mask.getWidth();
+		int N = ipCh1Mask.getHeight();
+		//create labeled mask1
+		
+		ShortProcessor ch1MaskLabeled =  new ShortProcessor(M,N);
+		
+		Wand wand1 = new Wand(ipCh1MaskTest);
+		int ch1Clusters = 1;
+		for (int u = 0; u < M; u++) {
+			for (int v = 0; v < N; v++) {
+				int pCh1 = ipCh1MaskTest.get(u, v);
+				int pCh1MaskLabeled = ch1MaskLabeled.get(u, v);
+				if ((pCh1 == 255) & (pCh1MaskLabeled == 0)) {
 
+					wand1.autoOutline(u, v, 255, 255);
+					PolygonRoi roi_par = new PolygonRoi(wand1.xpoints, wand1.ypoints, wand1.npoints, Roi.POLYGON);
+
+					// Then add the image processor of intensity to the list
+					ch1MaskLabeled.setRoi(roi_par);
+					ch1MaskLabeled.setValue(ch1Clusters);
+					ch1MaskLabeled.fill(roi_par);
+					
+					ipCh1MaskTest.setRoi(roi_par);
+					ipCh1MaskTest.setValue(200);
+					ipCh1MaskTest.fill(roi_par);
+					ch1Clusters++;
+				}
+			}
+		}
+	
+		
+		ImageProcessor ipFloodCh2 =  ipCh2Mask.duplicate();
+		Wand wand = new Wand(ipFloodCh2);
+
+		for (int u = 0; u < M; u++) {
+			for (int v = 0; v < N; v++) {
+				int pCh2 = ipFloodCh2.get(u, v);
+				if ((pCh2 == 255)) {
+
+					wand.autoOutline(u, v, 255, 255);
+					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
+
+					// Then add the image processor of intensity to the list
+					ch1MaskLabeled.setRoi(roi_par);
+					ImageStatistics stats = ch1MaskLabeled.getStatistics();
+					double maximumVal = stats.max;
+					if (maximumVal >0){
+						int[] histogram = stats.histogram16;
+						int countCluster = 0;
+						
+						for (int in = 1; in < histogram.length; in++) {
+							int values = histogram[in];
+							if (values > 0){
+								countCluster++;
+							}
+						}
+						IJ.log(Integer.toString(countCluster));
+						ipFloodCh2.setRoi(roi_par);
+						ipFloodCh2.setValue(100);
+						ipFloodCh2.fill(roi_par);
+						
+						if (countCluster == 1){
+							oneToOne++;
+						}
+						else if (countCluster == 2){
+							oneToTwo++;
+						}
+						else if (countCluster == 3){
+							oneToThree++;
+						}
+						else if (countCluster > 3){
+							oneToMore++;
+						}
+						
+					}
+					
+				}
+			}
+		}
+		clusterStoich[0] = oneToOne;
+		clusterStoich[1] = oneToTwo;
+		clusterStoich[2] = oneToThree;
+		clusterStoich[3] = oneToMore;
+		return clusterStoich;
+	}
 	void setClustersOverlay(ImagePlus im, ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 
 		// Color red_color = new Color( 255, 0, 0);

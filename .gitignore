@@ -10,3 +10,4 @@ Interaction_Factor_Plugin.iml
 
 
 *.class
+/target/
