@@ -817,28 +817,29 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 			summary.addValue(channelsAbb[ch1Color] + " Mean Inten > th", ch1MeanInt);
 			summary.addValue(channelsAbb[ch2Color] + " Mean Inten > th", ch2MeanInt);
 		}
-		if(ch1StoiOption){
-			//Stoichiometry
-			summary.addValue(channelsAbb[ch1Color] + "1:1", ch1OverlapsStoich[0]);
-			summary.addValue(channelsAbb[ch1Color] + "1:2", ch1OverlapsStoich[1]);
-			summary.addValue(channelsAbb[ch1Color] + "1:3", ch1OverlapsStoich[2]);
-			summary.addValue(channelsAbb[ch1Color] + "1:>3", ch1OverlapsStoich[3]);
-		}
-		if(ch2StoiOption){
-			//Stoichiometry
-			summary.addValue(channelsAbb[ch2Color] + "1:1", ch2OverlapsStoich[0]);
-			summary.addValue(channelsAbb[ch2Color] + "1:2", ch2OverlapsStoich[1]);
-			summary.addValue(channelsAbb[ch2Color] + "1:3", ch2OverlapsStoich[2]);
-			summary.addValue(channelsAbb[ch2Color] + "1:>3", ch2OverlapsStoich[3]);
-		}
 		//Overlap Measurements
 		if (overlapsOpt){
 			summary.addValue(channelsAbb[ch1Color]+" Overlaps",ch1Overlaps);
 			summary.addValue(channelsAbb[ch2Color] + " Overlaps", ch2Overlaps);
 		}
+		if(ch1StoiOption){
+			//Stoichiometry
+			summary.addValue(channelsAbb[ch1Color] + "1:1", String.format("%.1f", ((float)ch1OverlapsStoich[0]/ch1Overlaps)*100));//String.format("%.1f", ((float)ch2OverlapsStoich[0]/ch2Overlaps)*100)
+			summary.addValue(channelsAbb[ch1Color] + "1:2", String.format("%.1f", ((float)ch1OverlapsStoich[1]/ch1Overlaps)*100));
+			summary.addValue(channelsAbb[ch1Color] + "1:3", String.format("%.1f", ((float)ch1OverlapsStoich[2]/ch1Overlaps)*100));
+			summary.addValue(channelsAbb[ch1Color] + "1:>3", String.format("%.1f", ((float)ch1OverlapsStoich[3]/ch1Overlaps)*100));
+		}
+		if(ch2StoiOption){
+			//Stoichiometry
+			summary.addValue(channelsAbb[ch2Color] + "1:1", String.format("%.1f", ((float)ch2OverlapsStoich[0]/ch2Overlaps)*100));
+			summary.addValue(channelsAbb[ch2Color] + "1:2", String.format("%.1f", ((float)ch2OverlapsStoich[1]/ch2Overlaps)*100));
+			summary.addValue(channelsAbb[ch2Color] + "1:3", String.format("%.1f", ((float)ch2OverlapsStoich[2]/ch2Overlaps)*100));
+			summary.addValue(channelsAbb[ch2Color] + "1:>3", String.format("%.1f", ((float)ch2OverlapsStoich[3]/ch2Overlaps)*100));
+		}
+		
 		if (overlapsPercOpt){
-			summary.addValue(channelsAbb[ch1Color]+" %Overlaps",ch1Percentage*100);
-			summary.addValue(channelsAbb[ch2Color] + " %Overlaps", ch2Percentage*100);
+			summary.addValue(channelsAbb[ch1Color]+" %Overlaps",String.format("%.1f", (float)ch1Percentage*100));
+			summary.addValue(channelsAbb[ch2Color] + " %Overlaps", String.format("%.1f", (float)ch1Percentage*100));
 		}
 		if (overlapsCountOpt){
 			summary.addValue("Overlap Count", overlapCount);
@@ -847,8 +848,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 			summary.addValue("Overlap Area", aOverlapPixels);
 		}
 		if (sumIntOption){
-			summary.addValue(channelsAbb[ch1Color] + " Sum Inten", ch1SumIntensity);
-			summary.addValue(channelsAbb[ch2Color] + " Sum Inten", ch2SumIntensity);
+			summary.addValue(channelsAbb[ch1Color] + " Sum Inten", (int)ch1SumIntensity);
+			summary.addValue(channelsAbb[ch2Color] + " Sum Inten", (int)ch2SumIntensity);
 		}
 
         //Show images
@@ -1044,29 +1045,28 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         			summary.addValue(channelsAbb[ch1Color] + " Mean Inten > th", ch1MeanInt);
         			summary.addValue(channelsAbb[ch2Color] + " Mean Inten > th", ch2MeanInt);
         		}
-        		
-        		if(ch1StoiOption){
-        			//Stoichiometry
-        			summary.addValue(channelsAbb[ch1Color] + "1:1", ch1RandomOverlapsStoich[0]);
-        			summary.addValue(channelsAbb[ch1Color] + "1:2", ch1RandomOverlapsStoich[1]);
-        			summary.addValue(channelsAbb[ch1Color] + "1:3", ch1RandomOverlapsStoich[2]);
-        			summary.addValue(channelsAbb[ch1Color] + "1:>3", ch1RandomOverlapsStoich[3]);
-        		}
-        		if(ch2StoiOption){
-        			//Stoichiometry
-        			summary.addValue(channelsAbb[ch2Color] + "1:1", ch2RandomOverlapsStoich[0]);
-        			summary.addValue(channelsAbb[ch2Color] + "1:2", ch2RandomOverlapsStoich[1]);
-        			summary.addValue(channelsAbb[ch2Color] + "1:3", ch2RandomOverlapsStoich[2]);
-        			summary.addValue(channelsAbb[ch2Color] + "1:>3", ch2RandomOverlapsStoich[3]);
-        		}
         		//Overlap Measurements
         		if (overlapsOpt){
         			summary.addValue(channelsAbb[ch1Color]+" Overlaps",ch1RandomOverlaps);
         			summary.addValue(channelsAbb[ch2Color] + " Overlaps", ch2RandomOverlaps);
         		}
+        		if(ch1StoiOption){
+        			//Stoichiometry
+        			summary.addValue(channelsAbb[ch1Color] + "1:1", String.format("%.1f", ((float)ch1RandomOverlapsStoich[0]/ch1RandomOverlaps)*100));//String.format("%.1f", ((float)ch2OverlapsStoich[1]/ch2Overlaps)*100)
+        			summary.addValue(channelsAbb[ch1Color] + "1:2", String.format("%.1f", ((float)ch1RandomOverlapsStoich[1]/ch1RandomOverlaps)*100));
+        			summary.addValue(channelsAbb[ch1Color] + "1:3", String.format("%.1f", ((float)ch1RandomOverlapsStoich[2]/ch1RandomOverlaps)*100));
+        			summary.addValue(channelsAbb[ch1Color] + "1:>3", String.format("%.1f", ((float)ch1RandomOverlapsStoich[3]/ch1RandomOverlaps)*100));
+        		}
+        		if(ch2StoiOption){
+        			//Stoichiometry
+        			summary.addValue(channelsAbb[ch2Color] + "1:1", String.format("%.1f", ((float)ch2RandomOverlapsStoich[0]/ch2RandomOverlaps)*100));
+        			summary.addValue(channelsAbb[ch2Color] + "1:2", String.format("%.1f", ((float)ch2RandomOverlapsStoich[1]/ch2RandomOverlaps)*100));
+        			summary.addValue(channelsAbb[ch2Color] + "1:3", String.format("%.1f", ((float)ch2RandomOverlapsStoich[2]/ch2RandomOverlaps)*100));
+        			summary.addValue(channelsAbb[ch2Color] + "1:>3", String.format("%.1f", ((float)ch2RandomOverlapsStoich[3]/ch2RandomOverlaps)*100));
+        		}
         		if (overlapsPercOpt){
-        			summary.addValue(channelsAbb[ch1Color]+" %Overlaps",ch1RandomPercentage*100);
-        			summary.addValue(channelsAbb[ch2Color] + " %Overlaps", ch2RandomPercentage*100);
+        			summary.addValue(channelsAbb[ch1Color]+" %Overlaps", String.format("%.1f", (float)ch1RandomPercentage*100));
+        			summary.addValue(channelsAbb[ch2Color] + " %Overlaps", String.format("%.1f", (float)ch2RandomPercentage*100));
         		}
         		if (overlapsCountOpt){
         			summary.addValue("Overlap Count", oRandomCount);
