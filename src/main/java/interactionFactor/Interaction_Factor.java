@@ -27,7 +27,7 @@ import ij.gui.ProgressBar;
 public class Interaction_Factor implements PlugIn, DialogListener {
 
 	private String PREF_KEY = "IF_prefs.";
-	private int nMaxSimulations = 50;
+	private int nMaxSimulationsIF = 50;
 	private String[] channels = {"Red","Green","Blue"};
 	private String[] channelsAbb = {"R","G","B"};
 	private String[] thMethods;
@@ -256,11 +256,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		boolean moveCh1Clusters = Prefs.get(PREF_KEY + "moveOption", true);
 
 		//Measurement Options
-		
 		boolean overlapsOpt = Prefs.get(PREF_KEY + "overlapsOpt", true);
 		boolean overlapsPercOpt = Prefs.get(PREF_KEY + "overlapsPercOpt", true);
-		boolean overlapCountOpt = Prefs.get(PREF_KEY + "overlapsCountOpt", true);
-		boolean overlapAreaOpt = Prefs.get(PREF_KEY + "overlapsAreaOpt", true);
+		boolean overlapsCountOpt = Prefs.get(PREF_KEY + "overlapsCountOpt", true);
+		boolean overlapsAreaOpt = Prefs.get(PREF_KEY + "overlapsAreaOpt", true);
 		boolean sumIntOption =  Prefs.get(PREF_KEY + "sumIntOption", true);
 		boolean sumIntThOption = Prefs.get(PREF_KEY + "sumIntThOption", true);
 		boolean meanIntThOption = Prefs.get(PREF_KEY + "meanIntThOption", true);
@@ -268,6 +267,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		boolean areaRoiOption = Prefs.get(PREF_KEY + "areaRoiOption", true);
 		boolean ch1StoiOption= Prefs.get(PREF_KEY + "ch1StoiOption", true);
 		boolean ch2StoiOption =Prefs.get(PREF_KEY + "ch2StoiOption", true );
+		
+		//Output Options
 		boolean simImageOption = Prefs.get(PREF_KEY + "simImageOption", false);
 		boolean ch1MaskOption =Prefs.get(PREF_KEY + "ch1MaskOption", false);
 		boolean ch2MaskOption =Prefs.get(PREF_KEY + "ch2MaskOption", false);
@@ -285,9 +286,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		
 		measurVals[7]= overlapsOpt;
 		measurVals[8] = overlapsPercOpt;
-		measurVals[9]= overlapCountOpt;
-		measurVals[10]= overlapAreaOpt;
+		measurVals[9]= overlapsCountOpt;
+		measurVals[10]= overlapsAreaOpt;
 		
+		//Output options
 		outputImgVals[0] = simImageOption;
 		outputImgVals[1] = ch1MaskOption;
 		outputImgVals[2] = ch2MaskOption;
@@ -318,6 +320,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		buttons.add(b2);
 		gd.addPanel(buttons, GridBagConstraints.CENTER, new Insets(15,0,0,0));
 		// *****
+		
 		gd.addMessage("--------------- IF Parameter ---------------\n");
 		gd.addCheckbox("Move_Ch1_Clusters", moveCh1Clusters);
 		
@@ -344,6 +347,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		ImageJ thisImageJ = IJ.getInstance();
 		ProgressBar progressBar = thisImageJ.getProgressBar();
 		progressBar.show(0.0, true);
+		IfFunctions fs = new IfFunctions();
 		run_IF(gd);
 		
 		//gd.centerDialog(true);
@@ -692,7 +696,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		Arrays.fill(ch1ClustersProbs, 0);
 		double countForPvalCh1 = 0;
 		
-		for (int i = 0; i < nMaxSimulations; i++) {
+		for (int i = 0; i < nMaxSimulationsIF; i++) {
 			IJ.showProgress(i, 50);
 			String nSimulation = Integer.toString(i+1);
 			IJ.showStatus("Running IF..."+nSimulation+"/50");
@@ -798,13 +802,13 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 		}
 		
-		double pValCh1Ch2 = countForPvalCh2/(double)nMaxSimulations;
-		double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulations);
+		double pValCh1Ch2 = countForPvalCh2/(double)nMaxSimulationsIF;
+		double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulationsIF);
 		double IFCh1Ch2 = 0;
 		IFCh1Ch2 = fs.calcIF(ch2ClustersProbsTest, ch2Percentage);
 		
-		double pValCh2Ch1 = countForPvalCh1/(double)nMaxSimulations;
-		double[] ch1ClustersProbsTest = fs.prob(ch1ClustersProbs, nMaxSimulations);
+		double pValCh2Ch1 = countForPvalCh1/(double)nMaxSimulationsIF;
+		double[] ch1ClustersProbsTest = fs.prob(ch1ClustersProbs, nMaxSimulationsIF);
 		double IFCh2Ch1 = 0;
 		IFCh2Ch1 = fs.calcIF(ch1ClustersProbsTest, ch1Percentage);
 		

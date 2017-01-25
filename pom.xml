@@ -14,7 +14,7 @@
 
 	<groupId>FenyoLab</groupId>
 	<artifactId>Interaction_Factor_Package</artifactId>
-	<version>0.3.0</version>
+	<version>0.4.0</version>
 
 	<name>plugins/Interaction_Factor_Package.jar</name>
 	<description>This plugin performs colocalization analysis and generates simulations based on experimental data</description>
@@ -23,7 +23,7 @@
 		<developer>
 			<name>Keria Bermudez</name>
 			<email>keria.bermudez@gmail.com</email>
-			<url>http://kbermudez.ccom</url>
+			<url>http://kbermudez.com</url>
 			<organization>NYU Langone Medical Center</organization>
 			<roles>
 				<role>architect</role>
@@ -35,7 +35,7 @@
 
 
 	<properties>
-		<main-class>Interaction_Factor_Package-v0.3.0</main-class>
+		<main-class>Interaction_Factor_Package-v0.4.0</main-class>
 	</properties>
 
 	<dependencies>
