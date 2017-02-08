@@ -1,11 +1,8 @@
 package interactionFactor;
+import ij.*;
 import ij.gui.NonBlockingGenericDialog;
 import ij.gui.Overlay;
 import ij.gui.DialogListener;
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
@@ -241,7 +238,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		else
 		{
 
-			gd.repaint();
+			//gd.repaint();
 			//IJ.log("Started IF Plugin...");
 		}
 		return true;
@@ -359,8 +356,22 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	{
 		
 		IJ.showProgress(0.0);
+
+		String ch1_name = "Red";
+		String ch2_name = "Green";
+		if(IJ.macroRunning())
+		{
+			//Way 1
+			//ch1_name = gd.getNextChoice();
+			//ch2_name = gd.getNextChoice();
+
+			//Way 2
+			ch1_name = Macro.getValue(Macro.getOptions(), "Channe1(Ch1)_Color", "Red"); //last var. is the default, prob should get from PREFs
+			ch2_name = Macro.getValue(Macro.getOptions(), "Channe2(Ch2)_Color", "Green");
+
+		}
 		
-		//get options	
+		//get options
 		Choice choice0 = (Choice) gd.getChoices().get(0);
 		int ch1Color = choice0.getSelectedIndex();
 		Choice choice1 = (Choice) gd.getChoices().get(1);
