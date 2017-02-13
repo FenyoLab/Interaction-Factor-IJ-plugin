@@ -293,7 +293,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         gd.addMessage("--------------- Segmentation ---------------\n");
         gd.addChoice("Channel_1_(Ch1)_Color:", channels, channels[ch1Color]);
         gd.addChoice("Channel_2_(Ch2)_Color:", channels, channels[ch2Color]);
-        gd.addChoice("Threshold_Algorithm:", thMethods, thMethods[thMethodInt]);
+        gd.addChoice("Threshold:", thMethods, thMethods[thMethodInt]);
         gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
        
         
@@ -789,9 +789,14 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		
 		summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" IF", IFCh1Ch2);
 		summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" p-val", pValStrCh1Ch2);
-		
-		summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", IFCh2Ch1);
-		summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", pValStrCh2Ch1);
+		if (moveCh1Clusters){
+			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", IFCh2Ch1);
+			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", pValStrCh2Ch1);
+		}
+		else{
+			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", "NT");
+			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", "NT");
+		}
 
 		//Segmentation
 		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
