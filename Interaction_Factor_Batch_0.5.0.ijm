@@ -1,8 +1,8 @@
 macro "Interaction_Factor_Batch"{
 
-dir = getDirectory("Select Direcotory with Images");
-dir_roi = getDirectory("Select Direcotory with ROIs");
-dir_results = getDirectory("Select Direcotory for Results");
+dir = getDirectory("Select Directory with Images");
+dir_roi = getDirectory("Select Directory with ROIs");
+dir_results = getDirectory("Select Directory for Results");
 
 parent = File.getParent(dir);
 list = getFileList(dir);
@@ -26,8 +26,7 @@ for (i=0; i <list.length;i++){
 		roiManager("Add");
 		selectWindow(list[i]);
 		roiManager("Select", i);
-		run("Interaction Factor Sims", "channel_1(ch1)_color=Green channel_2(ch2)_color=Red threshold=Otsu ch1_simulation=None ch2_simulation=Random ch2_interaction_factor=0.0 number_of_simulations=1");
-
+	 	run("Interaction Factor", "channel_1(ch1)_color=Red channel_2(ch2)_color=Green threshold=Otsu move_ch1_clusters clusters_area");
 		///call(Interaction_Factor.test_run()
 		name = substring(list[i], 0, lengthOf(list[i])-4);
 		IJ.log(name);
@@ -36,5 +35,6 @@ for (i=0; i <list.length;i++){
         }
       } 
       selectWindow("Results");
-      saveAs("results",dir_results+"/"+"Results"+".xls");  
+      saveAs("results",dir_results+"/"+"Results"+".xls");
+      run("Close");  
 }

@@ -68,7 +68,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private boolean roiMaskOption = false;
 	private boolean overlapMaskOption = false ;
 	private boolean overlapLocations = false; 
-	
+
 	public Interaction_Factor() {
 		thMethods = AutoThresholder.getMethods();
 		methods = AutoThresholder.Method.values();
@@ -323,7 +323,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	}
 
 	public void run(String arg) {
-		
+		 
 		 thMethodInt = (int) Prefs.get(PREF_KEY + "thMethodInt", 11);
 		 ch1Color = (int) Prefs.get(PREF_KEY + "ch1Color", 0);
 		 ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
@@ -415,8 +415,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		buttons.add(b1);
 		gd.addPanel(buttons, GridBagConstraints.EAST, new Insets(15,0,0,0));
 		// *****
-
+		Recorder.recordInMacros = true;
 		gd.showDialog();
+		
+		
 		if (gd.wasCanceled())
 			return;
 		
@@ -475,9 +477,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 run_IF(ch1Color,ch2Color,thMethodInt,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,overlapsPercOpt,overlapsCountOpt,
 				overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,ch2MaskOption,roiMaskOption,
 				overlapMaskOption,overlapLocations);
+		
 		 
-		 
-		 if (Recorder.record){
+		  if (Recorder.record){
 				//Recorder.recordCall("Interaction Factor",options);
 				Recorder.recordOption("channel_1(ch1)_color",ch1ColorStr);
 				Recorder.recordOption("channel_2(ch2)_color",ch2ColorStr);

@@ -32,7 +32,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
     private static  String[] channelsLower = {"red", "green", "blue"};
     private String[] channelsAbb = {"R","G","B"};
     private static  String[] simParametersCh1 = {"None", "Random"};
-    private static  String[] simParametersCh2 = {"Random", "Non Random"};
+    private static  String[] simParametersCh2 = {"Random", "NonRandom"};
     
     private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Sum_Pixel_Inten_>_Th","Mean_Pixel_Inten_>_Th","Ch1_Stoichiometry","Ch2_Stoichiometry",
 			"Overlaps","%Overlaps","Overlaps_Count","Overlap_Area"};
@@ -68,6 +68,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 	
 	private String ch1SimParam;
     private String ch2SimParam;
+    private Integer ch1SimParamInt;
+    private Integer ch2SimParamInt;
     private double interFactorCh2;
 	
     private AutoThresholder.Method[] methods;
@@ -289,11 +291,14 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
          overlapLocations =  Prefs.get(PREF_KEY + "overlapLocations", false);
 		
         //Simulations
-         //ch1SimParam= Prefs.get(PREF_KEY + "ch1SimParam", simParametersCh1[0]);
-         //ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[0]);
-         interFactorCh2 =  Prefs.get(PREF_KEY + "interFactorCh2", 0);
+        ch1SimParamInt = (int) Prefs.get(PREF_KEY + "ch1SimParam", 0);
+        ch2SimParamInt = (int) Prefs.get(PREF_KEY + "ch2SimParam", 0);
+        interFactorCh2 =  Prefs.get(PREF_KEY + "interFactorCh2", 0);
         nMaxSimulations = (int) Prefs.get(PREF_KEY + "nMaxSimulations", nMaxSimulations);
-        
+       
+        ch1SimParam = simParametersCh1[ch1SimParamInt];
+        ch2SimParam = simParametersCh2[ch2SimParamInt];
+
         measurVals[0] = areaOption;
 		measurVals[1] = areaRoiOption;
 		measurVals[2] = sumIntOption;
@@ -340,7 +345,11 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
  		buttons.add(b2);
  		gd.addPanel(buttons, GridBagConstraints.CENTER, new Insets(15,0,0,0));
  		// *****
-		
+ 		gd.addMessage("---------- Simulation Parameters -----------\n");
+        gd.addRadioButtonGroup("Ch1_Simulation:", simParametersCh1, 2, 1, simParametersCh1[ch1SimParamInt]);
+        gd.addRadioButtonGroup("Ch2_Simulation:", simParametersCh2, 2, 1, simParametersCh2[ch2SimParamInt]);
+        gd.addNumericField("Interaction_Factor", 0, 2);
+        gd.addNumericField("Number_of_Simulations:", nMaxSimulations, 0);
         
  		gd.addMessage("----------- Additional Measurements --------\n");
 		gd.addCheckboxGroup(6, 2, measurements, measurVals);
@@ -348,14 +357,11 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		gd.addMessage("-------------- Output Images ---------------\n");
 		gd.addCheckboxGroup(3, 2, outputImg, outputImgVals);
        
-        gd.addMessage("---------- Simulation Parameters -----------\n");
-        gd.addRadioButtonGroup("Ch1 Simulation:", simParametersCh1, 2, 1, ch1SimParam);
-        gd.addRadioButtonGroup("Ch2 Simulation:", simParametersCh2, 2, 1, ch2SimParam);
-        gd.addNumericField("Interaction_Factor", 0, 2);
-        gd.addNumericField("Number_of_Simulations:", nMaxSimulations, 0);
+        
         
         gd.showDialog();
-
+        Recorder.recordInMacros = true;
+        
         if (gd.wasCanceled())
             return;
         
@@ -495,8 +501,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
   		Prefs.set(PREF_KEY + "roiMaskOption", roiMaskOption);
   		Prefs.set(PREF_KEY + "overlapMaskOption", overlapMaskOption);
   		Prefs.set(PREF_KEY + "overlapLocations", overlapLocations);
-  	    Prefs.set(PREF_KEY + "ch1SimParam", ch1SimParam);
-        Prefs.set(PREF_KEY + "ch2SimParam", ch2SimParam);
+  	    Prefs.set(PREF_KEY + "ch1SimParam", ch1SimParamInt);
+        Prefs.set(PREF_KEY + "ch2SimParam", ch2SimParamInt);
         Prefs.set(PREF_KEY + "interFactorCh2", interFactorCh2);
         Prefs.set(PREF_KEY + "nMaxSimulations", nMaxSimulations);
         
@@ -514,7 +520,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             return;
         }
         
-        if(ch2SimParam.equals("Non Random")){
+        if(ch2SimParam.equals("NonRandom")){
             if (interFactorCh2 >= 1.0){
                 IJ.error("Interaction Factor has to be less than 1");
                 return;
@@ -971,7 +977,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
                 	interFactorCh2 = 0;
                     ipCh2Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch2Clusters,ch2ClustersRect);
                 }
-                else if(ch2SimParam.equals("Non Random")){
+                else if(ch2SimParam.equals("NonRandom")){
                     ipCh2Random = fs.simNonRandom(ipMask,minX,maxX,minY,maxY,ipCh1Random,ch2Clusters,ch2ClustersRect,interFactorCh2,th_ch1);
                 }
                 if (ipCh2Random == null || ipCh1Random == null){
@@ -1096,7 +1102,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 
                 }
                 else {
-                    summary.addValue(channelsAbb[ch2Color] + " Sim", "Non Random");
+                    summary.addValue(channelsAbb[ch2Color] + " Sim", "NonRandom");
                     summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" IF", interFactorCh2);
                     summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" p-val", "NT");
                     }
