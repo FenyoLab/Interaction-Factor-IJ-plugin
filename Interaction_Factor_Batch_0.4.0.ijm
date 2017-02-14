@@ -10,12 +10,6 @@ list = getFileList(dir);
 numberFiles = 0;
 numberMasks = 0;
 
-//Set options
-//call("ij.Prefs.set", "IF_prefs.ch1Color", "0");
-//call("ij.Prefs.set", "IF_prefs.ch2Color", "1");
-//call("ij.Prefs.set", "IF_prefs.thMethodInt", "11");
-//call("ij.Prefs.set", "IF_prefs.areaRoiOption", "true");
-//call("ij.Prefs.set", "IF_prefs.ch1StoiOption", "true");
 
 for (i=0; i <list.length;i++){
     if (endsWith(list[i], ".tif")){
@@ -32,7 +26,8 @@ for (i=0; i <list.length;i++){
 		roiManager("Add");
 		selectWindow(list[i]);
 		roiManager("Select", i);
-		run("Interaction Factor", "channel1(ch1)_color=Green channel2(ch2)_color=Red  threshold=Otsu ");
+		run("Interaction Factor Sims", "channel_1(ch1)_color=Green channel_2(ch2)_color=Red threshold=Otsu ch1_simulation=None ch2_simulation=Random ch2_interaction_factor=0.0 number_of_simulations=1");
+
 		///call(Interaction_Factor.test_run()
 		name = substring(list[i], 0, lengthOf(list[i])-4);
 		IJ.log(name);

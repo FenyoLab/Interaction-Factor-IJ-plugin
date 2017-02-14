@@ -13,6 +13,8 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.process.*;
 import ij.plugin.filter.Analyzer;
+import ij.plugin.frame.Recorder;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,16 +29,46 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 	
 	private static String[] thMethods = AutoThresholder.getMethods();
     private static  String[] channels = {"Red", "Green", "Blue"};
+    private static  String[] channelsLower = {"red", "green", "blue"};
     private String[] channelsAbb = {"R","G","B"};
     private static  String[] simParametersCh1 = {"None", "Random"};
     private static  String[] simParametersCh2 = {"Random", "Non Random"};
     
     private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Sum_Pixel_Inten_>_Th","Mean_Pixel_Inten_>_Th","Ch1_Stoichiometry","Ch2_Stoichiometry",
 			"Overlaps","%Overlaps","Overlaps_Count","Overlap_Area"};
-	private boolean[] measurVals = {true,true,true,true,true,true,true,true,true,true,true,true};
+	private boolean[] measurVals = {false,false,false,false,false,false,false,false,false,false,false,false};
 	private String[] outputImg = {"Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations"};
 	private boolean[] outputImgVals = {false,false,false,false,false};
+	
+	private int thMethodInt = 11 ;
+	private int ch1Color = 0 ;
+	private int ch2Color = 1 ;
+	private boolean edgeOption = false;
+	private boolean moveCh1Clusters = false ;
 
+	//Measurement Options
+	private boolean overlapsOpt = false ;
+	private boolean overlapsPercOpt = false ;
+	private boolean overlapsCountOpt = false;
+	private boolean overlapsAreaOpt = false  ;
+	private boolean sumIntOption = false;
+	private boolean sumIntThOption = false ;
+	private boolean meanIntThOption = false;
+	private boolean areaOption = false;
+	private boolean areaRoiOption = false ;
+	private boolean ch1StoiOption = false;
+	private boolean ch2StoiOption = false ;
+	
+	//Output Options
+	private boolean ch1MaskOption = false;
+	private boolean ch2MaskOption = false;
+	private boolean roiMaskOption = false;
+	private boolean overlapMaskOption = false ;
+	private boolean overlapLocations = false; 
+	
+	private String ch1SimParam;
+    private String ch2SimParam;
+    private double interFactorCh2;
 	
     private AutoThresholder.Method[] methods;
 
@@ -231,38 +263,35 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 
 	public void run(String arg) {
 		
-		int thMethodInt = (int) Prefs.get(PREF_KEY + "thMethodInt",0);
-        int ch1Color =  (int) Prefs.get(PREF_KEY + "ch1Color", 0);
-        int ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
-        boolean edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
-		boolean moveCh1Clusters = Prefs.get(PREF_KEY + "moveOption", true);
+		 thMethodInt = (int) Prefs.get(PREF_KEY + "thMethodInt",0);
+         ch1Color =  (int) Prefs.get(PREF_KEY + "ch1Color", 0);
+         ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
+         edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
 		
-        
-       
         //Measurement Options
-  		boolean overlapsOpt = Prefs.get(PREF_KEY + "overlapsOpt", true);
-  		boolean overlapsPercOpt = Prefs.get(PREF_KEY + "overlapsPercOpt", true);
-  		boolean overlapsCountOpt = Prefs.get(PREF_KEY + "overlapsCountOpt", true);
-  		boolean overlapsAreaOpt = Prefs.get(PREF_KEY + "overlapsAreaOpt", true);
-  		boolean sumIntOption =  Prefs.get(PREF_KEY + "sumIntOption", true);
-  		boolean sumIntThOption = Prefs.get(PREF_KEY + "sumIntThOption", true);
-  		boolean meanIntThOption = Prefs.get(PREF_KEY + "meanIntThOption", true);
-  		boolean areaOption = Prefs.get(PREF_KEY + "areaOption", true);
-  		boolean areaRoiOption = Prefs.get(PREF_KEY + "areaRoiOption", true);
-  		boolean ch1StoiOption= Prefs.get(PREF_KEY + "ch1StoiOption", true);
-  		boolean ch2StoiOption =Prefs.get(PREF_KEY + "ch2StoiOption", true );
+  		 overlapsOpt = Prefs.get(PREF_KEY + "overlapsOpt", true);
+  		 overlapsPercOpt = Prefs.get(PREF_KEY + "overlapsPercOpt", true);
+  		 overlapsCountOpt = Prefs.get(PREF_KEY + "overlapsCountOpt", true);
+  		 overlapsAreaOpt = Prefs.get(PREF_KEY + "overlapsAreaOpt", true);
+  		 sumIntOption =  Prefs.get(PREF_KEY + "sumIntOption", true);
+  		 sumIntThOption = Prefs.get(PREF_KEY + "sumIntThOption", true);
+  		 meanIntThOption = Prefs.get(PREF_KEY + "meanIntThOption", true);
+  		 areaOption = Prefs.get(PREF_KEY + "areaOption", true);
+  		 areaRoiOption = Prefs.get(PREF_KEY + "areaRoiOption", true);
+  		 ch1StoiOption= Prefs.get(PREF_KEY + "ch1StoiOption", true);
+  		 ch2StoiOption =Prefs.get(PREF_KEY + "ch2StoiOption", true );
   		
 		//Output Options
-        boolean ch1MaskOption = Prefs.get(PREF_KEY + "ch1MaskOption", false);
-        boolean ch2MaskOption =  Prefs.get(PREF_KEY + "ch2MaskOption", false);
-        boolean roiMaskOption = Prefs.get(PREF_KEY + "roiMaskOption", false);
-        boolean overlapMaskOption =  Prefs.get(PREF_KEY + "overlapMaskOption", false);
-        boolean overlapLocations =  Prefs.get(PREF_KEY + "overlapLocations", false);
+         ch1MaskOption = Prefs.get(PREF_KEY + "ch1MaskOption", false);
+         ch2MaskOption =  Prefs.get(PREF_KEY + "ch2MaskOption", false);
+         roiMaskOption = Prefs.get(PREF_KEY + "roiMaskOption", false);
+         overlapMaskOption =  Prefs.get(PREF_KEY + "overlapMaskOption", false);
+         overlapLocations =  Prefs.get(PREF_KEY + "overlapLocations", false);
 		
         //Simulations
-        String ch1SimParam= Prefs.get(PREF_KEY + "ch1SimParam", simParametersCh1[0]);
-        String ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[0]);
-        double interFactorCh2 =  Prefs.get(PREF_KEY + "interFactorCh2", 0);
+         //ch1SimParam= Prefs.get(PREF_KEY + "ch1SimParam", simParametersCh1[0]);
+         //ch2SimParam = Prefs.get(PREF_KEY + "ch2SimParam", simParametersCh2[0]);
+         interFactorCh2 =  Prefs.get(PREF_KEY + "interFactorCh2", 0);
         nMaxSimulations = (int) Prefs.get(PREF_KEY + "nMaxSimulations", nMaxSimulations);
         
         measurVals[0] = areaOption;
@@ -311,20 +340,18 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
  		buttons.add(b2);
  		gd.addPanel(buttons, GridBagConstraints.CENTER, new Insets(15,0,0,0));
  		// *****
-		gd.addMessage("--------------- IF Parameter ---------------\n");
- 		gd.addCheckbox("Move_Ch1_Clusters", moveCh1Clusters);
+		
         
  		gd.addMessage("----------- Additional Measurements --------\n");
 		gd.addCheckboxGroup(6, 2, measurements, measurVals);
 		
 		gd.addMessage("-------------- Output Images ---------------\n");
 		gd.addCheckboxGroup(3, 2, outputImg, outputImgVals);
-        
-        
+       
         gd.addMessage("---------- Simulation Parameters -----------\n");
         gd.addRadioButtonGroup("Ch1 Simulation:", simParametersCh1, 2, 1, ch1SimParam);
         gd.addRadioButtonGroup("Ch2 Simulation:", simParametersCh2, 2, 1, ch2SimParam);
-        gd.addNumericField("Ch2_Interaction_Factor", 0, 2);
+        gd.addNumericField("Interaction_Factor", 0, 2);
         gd.addNumericField("Number_of_Simulations:", nMaxSimulations, 0);
         
         gd.showDialog();
@@ -332,60 +359,47 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         if (gd.wasCanceled())
             return;
         
+        String ch1ColorStr =gd.getNextChoice();
+		for(int i=0;i<channels.length;i++){
+			if (ch1ColorStr.equals(channels[i])| ch1ColorStr.equals(channelsLower[i])){
+				ch1Color = i;
+			}
+		}
+		String ch2ColorStr =gd.getNextChoice();
+		for(int i=0;i<channels.length;i++){
+			if (ch2ColorStr.equals(channels[i])| ch2ColorStr.equals(channelsLower[i])){
+				ch2Color = i;
+			}
+		}
+		String thMethodIntStr = gd.getNextChoice();
+		for(int i=0;i<thMethods.length;i++){
+			if (thMethodIntStr.equals(thMethods[i])){
+				thMethodInt = i;
+			}
+		}
         
-        
-      //get options	
-  		Choice choice0 = (Choice) gd.getChoices().get(0);
-  		 ch1Color = choice0.getSelectedIndex();
-  		Choice choice1 = (Choice) gd.getChoices().get(1);
-  		 ch2Color = choice1.getSelectedIndex();
-  		Choice choice2 = (Choice) gd.getChoices().get(2);
-  		 thMethodInt = choice2.getSelectedIndex();
-  		
-  		Vector checkboxes = gd.getCheckboxes();
-  		
-  		Checkbox check0 = (Checkbox) checkboxes.get(0);
-  		Checkbox check1 = (Checkbox) checkboxes.get(1);
-  		Checkbox check2 = (Checkbox) checkboxes.get(2);
-  		Checkbox check3 = (Checkbox) checkboxes.get(3);
-  		Checkbox check4 = (Checkbox) checkboxes.get(4);
-  		Checkbox check5 = (Checkbox) checkboxes.get(5);
-  		Checkbox check6 = (Checkbox) checkboxes.get(6);
-  		Checkbox check7 = (Checkbox) checkboxes.get(7);
-  		Checkbox check8 = (Checkbox) checkboxes.get(8);
-  		Checkbox check9 = (Checkbox) checkboxes.get(9);
-  		Checkbox check10 = (Checkbox) checkboxes.get(10);
-  		Checkbox check11 = (Checkbox) checkboxes.get(11);
-  		Checkbox check12 = (Checkbox) checkboxes.get(12);
-  		Checkbox check13 = (Checkbox) checkboxes.get(13);
-  		Checkbox check14 = (Checkbox) checkboxes.get(14);
-  		Checkbox check15 = (Checkbox) checkboxes.get(15);
-  		Checkbox check16 = (Checkbox) checkboxes.get(16);
-  		Checkbox check17 = (Checkbox) checkboxes.get(17);
+        edgeOption = gd.getNextBoolean();
+		
+		areaOption = gd.getNextBoolean();
+		areaRoiOption = gd.getNextBoolean();
 
-		 edgeOption = check0.getState();
-		 moveCh1Clusters = check1.getState();
+		sumIntOption = gd.getNextBoolean();
+		sumIntThOption = gd.getNextBoolean();
+		meanIntThOption = gd.getNextBoolean();
 		
-		 areaOption = check2.getState();
-		 areaRoiOption = check3.getState();
+		ch1StoiOption = gd.getNextBoolean();
+		ch2StoiOption = gd.getNextBoolean();
 		
-		 sumIntOption = check4.getState();
-		 sumIntThOption = check5.getState();
-		 meanIntThOption = check6.getState();
+		overlapsOpt = gd.getNextBoolean();
+		overlapsPercOpt = gd.getNextBoolean();
+		overlapsCountOpt = gd.getNextBoolean();
+		overlapsAreaOpt = gd.getNextBoolean();
 		
-		 ch1StoiOption = check7.getState();
-		 ch2StoiOption = check8.getState();
-		
-		 overlapsOpt = check9.getState();
-		 overlapsPercOpt = check10.getState();
-		 overlapsCountOpt = check11.getState();
-		 overlapsAreaOpt = check12.getState();
-		
-		 ch1MaskOption = check13.getState();
-		 ch2MaskOption = check14.getState();
-		 roiMaskOption = check15.getState();
-		 overlapMaskOption = check16.getState();
-		 overlapLocations = check17.getState();
+		ch1MaskOption = gd.getNextBoolean();
+		ch2MaskOption = gd.getNextBoolean();
+		roiMaskOption = gd.getNextBoolean();
+		overlapMaskOption = gd.getNextBoolean();
+		overlapLocations = gd.getNextBoolean();
 
         //Simulation Parameters
         
@@ -393,15 +407,74 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         ch2SimParam = gd.getNextRadioButton();
         interFactorCh2 =  gd.getNextNumber();
         nMaxSimulations = (int) gd.getNextNumber();
-        edgeOption = gd.getNextBoolean();
-        moveCh1Clusters = gd.getNextBoolean();
         
+        if (ch1SimParam.equals("None") | ch1SimParam.equals("none")){
+        	moveCh1Clusters = false;
+        }
+        else if (ch1SimParam.equals("Random") | ch1SimParam.equals("random")){
+        	moveCh1Clusters = true;
+        }
+        if (Recorder.record){
+        	
+			Recorder.recordOption("channel_1(ch1)_color",ch1ColorStr);
+			Recorder.recordOption("channel_2(ch2)_color",ch2ColorStr);
+			Recorder.recordOption("threshold",thMethodIntStr);
+			Recorder.recordOption("Ch1_Simulation",ch1SimParam);
+			Recorder.recordOption("Ch2_Simulation",ch2SimParam);
+			Recorder.recordOption("Interaction_Factor",Double.toString(interFactorCh2));
+			Recorder.recordOption("Number_of_Simulations",Integer.toString(nMaxSimulations));
+			
+			if (edgeOption){
+				Recorder.recordOption("Exclude_Edge_Clusters");
+			}
+			if (moveCh1Clusters){
+				Recorder.recordOption("Move_Ch1_Clusters");
+			}
+			if(areaOption){
+				Recorder.recordOption("Clusters_Area");
+			}
+			if(areaRoiOption){
+				Recorder.recordOption("ROI_Area");
+			}
+			if(sumIntOption){
+				Recorder.recordOption("Sum_Pixel_Inten");
+			}
+			if(sumIntThOption){
+				Recorder.recordOption("Sum_Pixel_Inten_>_Th");
+			}
+			if(meanIntThOption){
+				Recorder.recordOption("Mean_Pixel_Inten_>_Th");
+			}
+			if(overlapsOpt){
+				Recorder.recordOption("Overlaps");
+			}
+			if(overlapsPercOpt){
+				Recorder.recordOption("%Overlaps");
+			}
+			if(overlapsCountOpt){
+				Recorder.recordOption("Overlaps_Count");
+			}
+			if(overlapsAreaOpt){
+				Recorder.recordOption("Overlap_Area");
+			}
+			if(ch1MaskOption){
+				Recorder.recordOption("Show_Ch1_Mask");
+			}
+			if(ch2MaskOption){
+				Recorder.recordOption("Show_Ch2_Mask");
+			}
+			if(overlapMaskOption){
+				Recorder.recordOption("Show_Overlap_Mask");
+			}
+			if(overlapLocations){
+				Recorder.recordOption("Overlap_Locations");	
+			}
+		}
         //Set Options
   		Prefs.set(PREF_KEY + "ch1Color", ch1Color);
   		Prefs.set(PREF_KEY + "ch2Color", ch2Color);
   		Prefs.set(PREF_KEY + "thMethodInt", thMethodInt);
   		Prefs.set(PREF_KEY + "edgeOption", edgeOption);
-  		Prefs.set(PREF_KEY + "moveOption", moveCh1Clusters);
   		Prefs.set(PREF_KEY+"areaOption", areaOption);
   		Prefs.set(PREF_KEY+"areaRoiOption", areaRoiOption);
 
@@ -426,6 +499,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         Prefs.set(PREF_KEY + "ch2SimParam", ch2SimParam);
         Prefs.set(PREF_KEY + "interFactorCh2", interFactorCh2);
         Prefs.set(PREF_KEY + "nMaxSimulations", nMaxSimulations);
+        
         IfFunctions fs = new IfFunctions();
 		
         AutoThresholder.Method[] methods = AutoThresholder.Method.values();
@@ -440,7 +514,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             return;
         }
         
-        if(ch2SimParam == "Non Random"){
+        if(ch2SimParam.equals("Non Random")){
             if (interFactorCh2 >= 1.0){
                 IJ.error("Interaction Factor has to be less than 1");
                 return;
@@ -636,6 +710,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         
         if (ch1ClusterCount == 0 || ch2ClusterCount == 0){
 			IJ.error("Zero Clusters. Choose another color");
+			return;
 			
 		}
         // Adding Overlays
@@ -889,14 +964,14 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             for (int i = 0; i < nMaxSimulations; i++) {
             	IJ.showProgress(i+50, 50+nMaxSimulations);
                 String nSimulation = Integer.toString(i+1);
-                if (ch1SimParam == "Random"){ // if both are random
+                if (ch1SimParam.equals("Random")){ // if both are random
                     ipCh1Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch1Clusters,ch1ClustersRect);
                 } 
-                if(ch2SimParam == "Random") { //ch1 is random and ch2 is nonrandom
+                if(ch2SimParam.equals("Random")) { //ch1 is random and ch2 is nonrandom
                 	interFactorCh2 = 0;
                     ipCh2Random = fs.simRandom(ipMask,minX,maxX,minY,maxY,ch2Clusters,ch2ClustersRect);
                 }
-                else if(ch2SimParam == "Non Random"){
+                else if(ch2SimParam.equals("Non Random")){
                     ipCh2Random = fs.simNonRandom(ipMask,minX,maxX,minY,maxY,ipCh1Random,ch2Clusters,ch2ClustersRect,interFactorCh2,th_ch1);
                 }
                 if (ipCh2Random == null || ipCh1Random == null){
@@ -1008,13 +1083,13 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
                 summary.addValue("Image", name + "_Sim_" + nSimulation);
                 summary.addValue("Scale", Double.toString(pixelHeight) + " " + unit);
                 
-                if (ch1SimParam == "None") {
+                if (ch1SimParam.equals("None")) {
                     summary.addValue(channelsAbb[ch1Color] + " Sim", "None");
 
                 }
                 else {
                     summary.addValue(channelsAbb[ch1Color]  +" Sim", "Random");}
-                if (ch2SimParam == "Random") {
+                if (ch2SimParam.equals("Random")) {
                     summary.addValue(channelsAbb[ch2Color] + " Sim", "Random");
                     summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" IF", 0);
                     summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" p-val", "NT");

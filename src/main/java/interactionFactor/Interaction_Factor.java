@@ -32,6 +32,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private String PREF_KEY = "IF_prefs.";
 	private int nMaxSimulationsIF = 50;
 	private String[] channels = {"Red","Green","Blue"};
+	private String[] channelsLower = {"red","green","blue"};
 	private String[] channelsAbb = {"R","G","B"};
 	private String[] thMethods;
 	private AutoThresholder.Method[] methods;
@@ -61,12 +62,12 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private boolean ch2StoiOption = false ;
 	
 	//Output Options
-	boolean simImageOption = false ;
-	boolean ch1MaskOption = false;
-	boolean ch2MaskOption = false;
-	boolean roiMaskOption = false;
-	boolean overlapMaskOption = false ;
-	boolean overlapLocations = false; 
+	private boolean simImageOption = false ;
+	private boolean ch1MaskOption = false;
+	private boolean ch2MaskOption = false;
+	private boolean roiMaskOption = false;
+	private boolean overlapMaskOption = false ;
+	private boolean overlapLocations = false; 
 	
 	public Interaction_Factor() {
 		thMethods = AutoThresholder.getMethods();
@@ -428,19 +429,19 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		
 		String ch1ColorStr =gd.getNextChoice();
 		for(int i=0;i<channels.length;i++){
-			if (ch1ColorStr == channels[i]){
+			if (ch1ColorStr.equals(channels[i])| ch1ColorStr.equals(channelsLower[i])){
 				ch1Color = i;
 			}
 		}
 		String ch2ColorStr =gd.getNextChoice();
 		for(int i=0;i<channels.length;i++){
-			if (ch2ColorStr == channels[i]){
+			if (ch2ColorStr.equals(channels[i])| ch2ColorStr.equals(channelsLower[i])){
 				ch2Color = i;
 			}
 		}
 		String thMethodIntStr = gd.getNextChoice();
 		for(int i=0;i<thMethods.length;i++){
-			if (thMethodIntStr == thMethods[i]){
+			if (thMethodIntStr.equals(thMethods[i])){
 				thMethodInt = i;
 			}
 		}
@@ -471,31 +472,11 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 overlapMaskOption = gd.getNextBoolean();
 		 overlapLocations = gd.getNextBoolean();
 
-		
-		
 		 run_IF(ch1Color,ch2Color,thMethodInt,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,overlapsPercOpt,overlapsCountOpt,
 				overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,ch2MaskOption,roiMaskOption,
 				overlapMaskOption,overlapLocations);
 		 
-		 String longString = Integer.toString(ch1Color);
-		 String threadName = Thread.currentThread().getName();
-		 Thread thisThread = Thread.currentThread();
-		 String optionsString = "ch1Color ch2Colorth MethodInt edgeOption moveCh1Clusters areaOption areaRoiOption overlapsOpt overlapsPercOpt overlapsCountOpt overlapsAreaOpt sumIntOption sumIntThOption meanIntThOption ch1StoiOptionch2StoiOption simImageOption ch1MaskOption ch2MaskOption roiMaskOption overlapMaskOption overlapLocations";
-		
-		 //Macro.setOptions(thisThread, optionsString );
-		 //String strOptions = Macro.getOptions();
-		//String test =  Macro.getValue(strOptions,"ch1Color","red");
 		 
-		 IJ.log(threadName);
-		 //IJ.log(strOptions);
-		 //IJ.log(test);
-		 //Recorder.saveCommand();
-		 //boolean isPverlapsPerc = arg.contains("Clusters_Area");
-		 //IJ.register(Interaction_Factor.class);
-		 //if (isPverlapsPerc){
-			 //IJ.log("It Worked");
-		 //}
-		//gd.centerDialog(true);
 		 if (Recorder.record){
 				//Recorder.recordCall("Interaction Factor",options);
 				Recorder.recordOption("channel_1(ch1)_color",ch1ColorStr);
@@ -504,7 +485,51 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 				if (edgeOption){
 					Recorder.recordOption("Exclude_Edge_Clusters");
 				}
-				
+				if (moveCh1Clusters){
+					Recorder.recordOption("Move_Ch1_Clusters");
+				}
+				if(areaOption){
+					Recorder.recordOption("Clusters_Area");
+				}
+				if(areaRoiOption){
+					Recorder.recordOption("ROI_Area");
+				}
+				if(sumIntOption){
+					Recorder.recordOption("Sum_Pixel_Inten");
+				}
+				if(sumIntThOption){
+					Recorder.recordOption("Sum_Pixel_Inten_>_Th");
+				}
+				if(meanIntThOption){
+					Recorder.recordOption("Mean_Pixel_Inten_>_Th");
+				}
+				if(overlapsOpt){
+					Recorder.recordOption("Overlaps");
+				}
+				if(overlapsPercOpt){
+					Recorder.recordOption("%Overlaps");
+				}
+				if(overlapsCountOpt){
+					Recorder.recordOption("Overlaps_Count");
+				}
+				if(overlapsAreaOpt){
+					Recorder.recordOption("Overlap_Area");
+				}
+				if(simImageOption){
+					Recorder.recordOption("Save_Random_Simulations");
+				}
+				if(ch1MaskOption){
+					Recorder.recordOption("Show_Ch1_Mask");
+				}
+				if(ch2MaskOption){
+					Recorder.recordOption("Show_Ch2_Mask");
+				}
+				if(overlapMaskOption){
+					Recorder.recordOption("Show_Overlap_Mask");
+				}
+				if(overlapLocations){
+					Recorder.recordOption("Overlap_Locations");	
+				}
 			}
 
 	}
@@ -730,6 +755,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 		if (ch1ClusterCount == 0 || ch2ClusterCount == 0){
 			IJ.error("Zero Clusters. Choose another color");
+			return;
 			
 		}
 		// Adding Overlays
