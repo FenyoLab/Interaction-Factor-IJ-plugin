@@ -34,8 +34,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
     private static  String[] simParametersCh1 = {"None", "Random"};
     private static  String[] simParametersCh2 = {"Random", "NonRandom"};
     
-    private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Sum_Pixel_Inten_>_Th","Mean_Pixel_Inten_>_Th","Ch1_Stoichiometry","Ch2_Stoichiometry",
-			"Overlaps","%Overlaps","Overlaps_Count","Overlap_Area"};
+    private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Clusters_Sum_Inten","Clusters_Mean_Inten","Ch1_Stoichiometry","Ch2_Stoichiometry",
+			"Clusters_Overlaps","%Clusters_Overlpas","Overlap_Count","Overlap_Area"};
 	private boolean[] measurVals = {false,false,false,false,false,false,false,false,false,false,false,false};
 	private String[] outputImg = {"Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations"};
 	private boolean[] outputImgVals = {false,false,false,false,false};
@@ -446,19 +446,19 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 				Recorder.recordOption("Sum_Pixel_Inten");
 			}
 			if(sumIntThOption){
-				Recorder.recordOption("Sum_Pixel_Inten_>_Th");
+				Recorder.recordOption("Clusters_Sum_Inten");
 			}
 			if(meanIntThOption){
-				Recorder.recordOption("Mean_Pixel_Inten_>_Th");
+				Recorder.recordOption("Clusters_Mean_Inten");
 			}
 			if(overlapsOpt){
-				Recorder.recordOption("Overlaps");
+				Recorder.recordOption("Clusters_Overlaps");
 			}
 			if(overlapsPercOpt){
-				Recorder.recordOption("%Overlaps");
+				Recorder.recordOption("%Clusters_Overlaps");
 			}
 			if(overlapsCountOpt){
-				Recorder.recordOption("Overlaps_Count");
+				Recorder.recordOption("Overlap_Count");
 			}
 			if(overlapsAreaOpt){
 				Recorder.recordOption("Overlap_Area");
@@ -883,30 +883,30 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
 		summary.addValue(channelsAbb[ch1Color] + " Th", th_ch1);
 		summary.addValue(channelsAbb[ch2Color] + " Th", th_ch2);
-		summary.addValue(channelsAbb[ch1Color] +" Count", ch1ClusterCount);
-		summary.addValue(channelsAbb[ch2Color] + " Count", ch2ClusterCount);
+		summary.addValue(channelsAbb[ch1Color] +" Clus Count", ch1ClusterCount);
+		summary.addValue(channelsAbb[ch2Color] + " Clus Count", ch2ClusterCount);
 		
 		//Optional Measurements
 		
 		if (areaOption){
-			summary.addValue(channelsAbb[ch1Color] + " Area", aCh1Pixels);
-			summary.addValue(channelsAbb[ch2Color] + " Area", aCh2Pixels);
+			summary.addValue(channelsAbb[ch1Color] + " Clus Area", aCh1Pixels);
+			summary.addValue(channelsAbb[ch2Color] + " Clus Area", aCh2Pixels);
 		}
 		if (areaRoiOption){
-			summary.addValue("ROI area", aRoi);
+			summary.addValue("ROI Area", aRoi);
 		}
 		if (sumIntThOption){
-			summary.addValue(channelsAbb[ch1Color] + " Sum Inten > th", ch1SumIntensityTh);
-			summary.addValue(channelsAbb[ch2Color] + " Sum Inten > th", ch2SumIntensityTh);
+			summary.addValue(channelsAbb[ch1Color] + " Clus Sum Inten", ch1SumIntensityTh);
+			summary.addValue(channelsAbb[ch2Color] + " Clus Sum Inten", ch2SumIntensityTh);
 		}
 		if (meanIntThOption){
-			summary.addValue(channelsAbb[ch1Color] + " Mean Inten > th", ch1MeanInt);
-			summary.addValue(channelsAbb[ch2Color] + " Mean Inten > th", ch2MeanInt);
+			summary.addValue(channelsAbb[ch1Color] + " Clus Mean Inten", ch1MeanInt);
+			summary.addValue(channelsAbb[ch2Color] + " Clus Mean Inten", ch2MeanInt);
 		}
 		//Overlap Measurements
 		if (overlapsOpt){
-			summary.addValue(channelsAbb[ch1Color]+" Overlaps",ch1Overlaps);
-			summary.addValue(channelsAbb[ch2Color] + " Overlaps", ch2Overlaps);
+			summary.addValue(channelsAbb[ch1Color]+" Clus Overlaps",ch1Overlaps);
+			summary.addValue(channelsAbb[ch2Color] + " Clus Overlaps", ch2Overlaps);
 		}
 		if(ch1StoiOption){
 			//Stoichiometry
@@ -924,8 +924,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		}
 		
 		if (overlapsPercOpt){
-			summary.addValue(channelsAbb[ch1Color]+" %Overlaps",String.format("%.1f", (float)ch1Percentage*100));
-			summary.addValue(channelsAbb[ch2Color] + " %Overlaps", String.format("%.1f", (float)ch1Percentage*100));
+			summary.addValue(channelsAbb[ch1Color]+" %Clus Overlaps",String.format("%.1f", (float)ch1Percentage*100));
+			summary.addValue(channelsAbb[ch2Color] + " %Clus Overlaps", String.format("%.1f", (float)ch1Percentage*100));
 		}
 		if (overlapsCountOpt){
 			summary.addValue("Overlap Count", overlapCount);
@@ -1112,29 +1112,29 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
         		summary.addValue(channelsAbb[ch1Color] + " Th", th_ch1);
         		summary.addValue(channelsAbb[ch2Color] + " Th", th_ch2);
-        		summary.addValue(channelsAbb[ch1Color] +" Count", ch1ClusterCount);
-        		summary.addValue(channelsAbb[ch2Color] + " Count", ch2ClusterCount);
+        		summary.addValue(channelsAbb[ch1Color] +" Clus Count", ch1ClusterCount);
+        		summary.addValue(channelsAbb[ch2Color] + " Clus Count", ch2ClusterCount);
         		//Optional Measurements
         		
         		if (areaOption){
-        			summary.addValue(channelsAbb[ch1Color] + " Area", aCh1Pixels);
-        			summary.addValue(channelsAbb[ch2Color] + " Area", aCh2Pixels);
+        			summary.addValue(channelsAbb[ch1Color] + " Clus Area", aCh1Pixels);
+        			summary.addValue(channelsAbb[ch2Color] + " Clus Area", aCh2Pixels);
         		}
         		if (areaRoiOption){
         			summary.addValue("ROI area", aRoi);
         		}
         		if (sumIntThOption){
-        			summary.addValue(channelsAbb[ch1Color] + " Sum Inten > th", ch1SumIntensityTh);
-        			summary.addValue(channelsAbb[ch2Color] + " Sum Inten > th", ch2SumIntensityTh);
+        			summary.addValue(channelsAbb[ch1Color] + " Clus Sum Inten", ch1SumIntensityTh);
+        			summary.addValue(channelsAbb[ch2Color] + " Clus Sum Inten", ch2SumIntensityTh);
         		}
         		if (meanIntThOption){
-        			summary.addValue(channelsAbb[ch1Color] + " Mean Inten > th", ch1MeanInt);
-        			summary.addValue(channelsAbb[ch2Color] + " Mean Inten > th", ch2MeanInt);
+        			summary.addValue(channelsAbb[ch1Color] + " Clus Mean Inten", ch1MeanInt);
+        			summary.addValue(channelsAbb[ch2Color] + " Clus Mean Inten", ch2MeanInt);
         		}
         		//Overlap Measurements
         		if (overlapsOpt){
-        			summary.addValue(channelsAbb[ch1Color]+" Overlaps",ch1RandomOverlaps);
-        			summary.addValue(channelsAbb[ch2Color] + " Overlaps", ch2RandomOverlaps);
+        			summary.addValue(channelsAbb[ch1Color]+" Clus Overlaps",ch1RandomOverlaps);
+        			summary.addValue(channelsAbb[ch2Color] + " Clus Overlaps", ch2RandomOverlaps);
         		}
         		if(ch1StoiOption){
         			//Stoichiometry
@@ -1151,8 +1151,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         			summary.addValue(channelsAbb[ch2Color] + "1:>3", String.format("%.1f", ((float)ch2RandomOverlapsStoich[3]/ch2RandomOverlaps)*100));
         		}
         		if (overlapsPercOpt){
-        			summary.addValue(channelsAbb[ch1Color]+" %Overlaps", String.format("%.1f", (float)ch1RandomPercentage*100));
-        			summary.addValue(channelsAbb[ch2Color] + " %Overlaps", String.format("%.1f", (float)ch2RandomPercentage*100));
+        			summary.addValue(channelsAbb[ch1Color]+" %Clus Overlaps", String.format("%.1f", (float)ch1RandomPercentage*100));
+        			summary.addValue(channelsAbb[ch2Color] + " %Clus Overlaps", String.format("%.1f", (float)ch2RandomPercentage*100));
         		}
         		if (overlapsCountOpt){
         			summary.addValue("Overlap Count", oRandomCount);
