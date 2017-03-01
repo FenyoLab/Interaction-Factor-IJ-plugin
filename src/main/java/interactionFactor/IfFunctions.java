@@ -14,6 +14,8 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.process.*;
 import ij.plugin.filter.Analyzer;
+import ij.plugin.frame.RoiManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -471,7 +473,7 @@ public class IfFunctions {
                             	if (marked == false){
                             		int pOtherMarked  = chMaskFlood.getPixel(u, v);
                             		if (pOtherMarked == 255){
-                            			wand.autoOutline(u, v, 255, 255);
+                            			wand.autoOutline(u, v, 255, 255,8);
                     					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
                     					// Then add the image processor of intensity to the list
                     					chMaskFlood.setRoi(roi_par);
@@ -499,7 +501,7 @@ public class IfFunctions {
                                 	if (marked == false){
                                 		int pOtherMarked  = chMaskFlood.getPixel(u, v);
                                 		if (pOtherMarked == 255){
-                                			wand.autoOutline(u, v, 255, 255);
+                                			wand.autoOutline(u, v, 255, 255,8);
                         					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
                         					// Then add the image processor of intensity to the list
                         					chMaskFlood.setRoi(roi_par);
@@ -664,7 +666,7 @@ public class IfFunctions {
 			for (int v = 0; v < N; v++) {
 				int p = chMaskFlood.get(u, v);
 				if (p == 255) {
-					wand.autoOutline(u, v, 255, 255);
+					wand.autoOutline(u, v, 255, 255,8);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
 					// Then add the image processor of intensity to the list
 					chMaskFlood.setRoi(roi_par);
@@ -746,7 +748,7 @@ public class IfFunctions {
 				int pCh1 = ipCh1Mask.get(u, v);
 				if ((pCh1 == 255) && (pCh2 == 255)) {
 
-					wand.autoOutline(u, v, 255, 255);
+					wand.autoOutline(u, v, 255, 255,8);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
 
 					// Then add the image processor of intensity to the list
@@ -808,7 +810,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 				int pCh2 = ipFloodCh2.get(u, v);
 				if ((pCh2 == 255)) {
 
-					wand.autoOutline(u, v, 255, 255);
+					wand.autoOutline(u, v, 255, 255,8);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
 
 					// Then add the image processor of intensity to the list
@@ -931,11 +933,13 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 	int clustersProcessing(String imageName, boolean results, ResultsTable rt, Calibration calibration,
 			ImageProcessor ipFlood, ImageProcessor channel, List<ImageProcessor> clusters,
 			List<Rectangle> clustersRect) {
-
+		
+		
 		double pixelHeight = calibration.pixelHeight;
 		double pixelWidth = calibration.pixelWidth;
 		double calConvert = pixelHeight * pixelWidth;
 		Wand wand = new Wand(ipFlood);
+		
 
 		int count = 0;
 
@@ -947,9 +951,9 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 				int p = ipFlood.get(u, v);
 				if (p == 255) {
 
-					wand.autoOutline(u, v, 255, 255);
+					wand.autoOutline(u, v, 255, 255,8);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
-
+					ipFlood.setRoi(roi_par);
 					ImageProcessor roi_parMask = roi_par.getMask();
 
 					Rectangle region_r = roi_par.getBounds();
@@ -982,9 +986,9 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					count++;
 
 					// adding the results
-
+					
 					if (results) {
-						ImageStatistics stats = ipFlood.getStatistics();
+					    ImageStatistics stats = ipFlood.getStatistics();
 						rt.incrementCounter();
 						rt.addValue("Image", imageName);
 						rt.addValue("Number Pixels", stats.area);
@@ -1020,7 +1024,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 			for (int v = 0; v < N; v++) {
 				int p = ipFlood.get(u, v);
 				if (p == 255) {
-					wand.autoOutline(u, v, 255, 255);
+					wand.autoOutline(u, v, 255, 255,8);
 					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
 					ipFlood.setRoi(roi_par);
 					ipFlood.setValue(200);

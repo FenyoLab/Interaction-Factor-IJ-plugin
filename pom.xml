@@ -14,7 +14,7 @@
 
 	<groupId>FenyoLab</groupId>
 	<artifactId>Interaction_Factor_Package</artifactId>
-	<version>0.5.1</version>
+	<version>0.5.2</version>
 
 	<name>plugins/Interaction_Factor_Package.jar</name>
 	<description>This plugin performs colocalization analysis and generates simulations based on experimental data</description>
@@ -35,7 +35,7 @@
 
 
 	<properties>
-		<main-class>Interaction_Factor_Package-v0.5.1</main-class>
+		<main-class>Interaction_Factor_Package-v0.5.2</main-class>
 	</properties>
 
 	<dependencies>
