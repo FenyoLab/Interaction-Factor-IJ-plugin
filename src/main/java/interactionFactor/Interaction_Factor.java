@@ -39,7 +39,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Clusters_Sum_Inten","Clusters_Mean_Inten","Ch1_Stoichiometry","Ch2_Stoichiometry",
 			"Clusters_Overlaps","%Clusters_Overlaps","Overlap_Count","Overlap_Area"};
 	private boolean[] measurVals = {true,true,true,true,true,true,true,true,true,true,true,true};
-	private String[] outputImg = {"Save_Random_Simulations","Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations"};
+	private String[] outputImg = {"Save_Random_Simulations","Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations_Table"};
 	private boolean[] outputImgVals = {false,false,false,false,false,false};
 	
 	private int thMethodInt = 11 ;
@@ -84,10 +84,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 				ActionEvent e_ = (ActionEvent) e;
 				String command = e_.getActionCommand();
 				if(command == "Test IF")
-				{
-					//Execute IF code here
-					//IJ.log("Running IF...");
-					
+				{	
 					Choice choice0 = (Choice) gd.getChoices().get(0);
 					 ch1Color = choice0.getSelectedIndex();
 					Choice choice1 = (Choice) gd.getChoices().get(1);
@@ -149,9 +146,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 				}
 				if(command == "Apply Overlay")
 				{
-					//IJ.log("Apply Overlay");
-					//IJ.run("Remove Overlay");
-					//choices
 					Choice choice0 = (Choice) gd.getChoices().get(0);
 					int ch1Color = choice0.getSelectedIndex();
 					
@@ -172,12 +166,11 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 					if (im.getType() != ImagePlus.COLOR_RGB) {
 						IJ.error("RGB image required");
-						
+	
 					}
 
 					if (ch1Color == ch2Color) {
 						IJ.error("Channel Colors are the same. Choose another channel");
-				
 					}
 
 					AutoThresholder.Method method = methods[thMethodInt];
@@ -291,7 +284,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 							fs.excludeEdges(roi, ipMask, ipCh2Mask);
 						}
 					}
-					
 					//fs.setClustersOverlay(im, ipCh1Mask,  ipCh2Mask);
 					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
 					Color stColor = Color.WHITE;
@@ -299,16 +291,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					//chsOverlays.setFillColor(fColor);
 					chsOverlays.setStrokeColor(stColor);
 					im.setOverlay(chsOverlays);
-
-					
-
 				}
 				if(command == "Clear Overlay")
 				{
-					//IJ.log("Clear Overlay");
-					//IJ.run("Remove Overlay");
-					ImagePlus im = IJ.getImage();
-					//im.setHideOverlay(true);
 					IJ.run("Remove Overlay");
 				}
 			}
@@ -417,7 +402,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		// *****
 		Recorder.recordInMacros = true;
 		gd.showDialog();
-		
 		
 		if (gd.wasCanceled())
 			return;
@@ -530,7 +514,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					Recorder.recordOption("Show_Overlap_Mask");
 				}
 				if(overlapLocations){
-					Recorder.recordOption("Overlap_Locations");	
+					Recorder.recordOption("Overlap_Locations_Table");	
 				}
 			}
 
@@ -703,7 +687,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		ipCh1Mask.threshold(th_ch1);
 
 		// Threshold ch2 channel
-
 		ipCh2Mask.setMask(ipMask);
 		int[] ch2_hist = ipCh2Mask.getHistogram();
 		int th_ch2 = autoth.getThreshold(method, ch2_hist);

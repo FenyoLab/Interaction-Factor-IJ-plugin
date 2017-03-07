@@ -26,7 +26,8 @@ for (i=0; i <list.length;i++){
 		roiManager("Add");
 		selectWindow(list[i]);
 		roiManager("Select", i);
-	 	run("Interaction Factor", "channel_1(ch1)_color=Red channel_2(ch2)_color=Green threshold=Otsu move_ch1_clusters clusters_area roi_area sum_pixel_inten clusters_sum_inten");
+	 	//run("Interaction Factor", "channel_1(ch1)_color=Red channel_2(ch2)_color=Green threshold=Otsu move_ch1_clusters clusters_area roi_area sum_pixel_inten clusters_sum_inten");
+		run("Interaction Factor", "channel_1(ch1)_color=Green channel_2(ch2)_color=Red threshold=Otsu move_ch1_clusters clusters_area roi_area sum_pixel_inten clusters_sum_inten clusters_mean_inten clusters_overlaps %clusters_overlaps overlap_count overlap_area");
 		///call(Interaction_Factor.test_run()
 		name = substring(list[i], 0, lengthOf(list[i])-4);
 		IJ.log(name);

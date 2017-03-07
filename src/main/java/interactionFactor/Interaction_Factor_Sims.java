@@ -37,7 +37,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
     private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Clusters_Sum_Inten","Clusters_Mean_Inten","Ch1_Stoichiometry","Ch2_Stoichiometry",
 			"Clusters_Overlaps","%Clusters_Overlpas","Overlap_Count","Overlap_Area"};
 	private boolean[] measurVals = {false,false,false,false,false,false,false,false,false,false,false,false};
-	private String[] outputImg = {"Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations"};
+	private String[] outputImg = {"Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations_Table"};
 	private boolean[] outputImgVals = {false,false,false,false,false};
 	
 	private int thMethodInt = 11 ;
@@ -245,10 +245,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 				}
 				if(command == "Clear Overlay")
 				{
-					//IJ.log("Clear Overlay");
-					//IJ.run("Remove Overlay");
+				
 					ImagePlus im = IJ.getImage();
-					//im.setHideOverlay(true);
 					IJ.run("Remove Overlay");
 				}
 			}
@@ -257,7 +255,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		{
 
 			gd.repaint();
-			//IJ.log("Started IF Plugin...");
+			
 		}
 			return true;
 		}
@@ -473,7 +471,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 				Recorder.recordOption("Show_Overlap_Mask");
 			}
 			if(overlapLocations){
-				Recorder.recordOption("Overlap_Locations");	
+				Recorder.recordOption("Overlap_Locations_Table");	
 			}
 		}
         //Set Options
@@ -537,7 +535,6 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             return;
         }
         
-
         String name = im.getShortTitle();
         AutoThresholder.Method method = methods[thMethodInt];
 

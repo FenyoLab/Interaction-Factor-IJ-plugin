@@ -29,17 +29,6 @@ import ij.gui.Overlay;
  * Created by keriabermudez on 10/27/16.
  */
 public class IfFunctions {
-	private String PREF_KEY = "IF_prefs.";
-	private int nMaxSimulationsIF = 50;
-	private String[] channels = {"Red","Green","Blue"};
-	private String[] channelsAbb = {"R","G","B"};
-	private String[] thMethods;
-	private AutoThresholder.Method[] methods;
-	private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Sum_Pixel_Inten_>_Th","Mean_Pixel_Inten_>_Th","Ch1_Stoichiometry","Ch2_Stoichiometry",
-			"Overlaps","%Overlaps","Overlaps_Count","Overlap_Area"};
-	private boolean[] measurVals = {true,true,true,true,true,true,true,true,true,true,true,true};
-	private String[] outputImg = {"Save_Random_Simulations","Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations"};
-	private boolean[] outputImgVals = {false,false,false,false,false,false};
 
 
 	void printTest() {
