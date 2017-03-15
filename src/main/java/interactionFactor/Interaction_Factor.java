@@ -46,7 +46,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private int ch1Color = 0 ;
 	private int ch2Color = 1 ;
 	private boolean edgeOption = false;
-	private boolean moveCh1Clusters = false ;
+	private boolean moveCh1Clusters = true ;
 
 	//Measurement Options
 	private boolean overlapsOpt = false ;
@@ -647,6 +647,12 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		boolean hasMask = (mask != null);
 		boolean hasRoi = (roiSelection != null);
 		
+		if (hasRoi){
+			String nameRoi = roiSelection.getName();
+			if (nameRoi != null){
+			name = name +'-'+nameRoi;
+			}
+		}
 		
 		if (hasMask) {
 			ipMask.insert(mask, roi.x, roi.y);

@@ -606,7 +606,14 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 
         boolean hasMask = (mask != null);
         boolean hasRoi = (roiSelection != null);
-
+        
+        if (hasRoi){
+			String nameRoi = roiSelection.getName();
+			if (nameRoi != null){
+			name = name +'-'+nameRoi;
+			}
+		}
+        
         if (hasMask) {
             ipMask.insert(mask, roi.x, roi.y); //method to insert another ip inside an ip does not work with rectangular rois
         } else {

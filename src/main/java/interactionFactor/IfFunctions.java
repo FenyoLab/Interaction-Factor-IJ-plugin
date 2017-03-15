@@ -31,10 +31,7 @@ import ij.gui.Overlay;
 public class IfFunctions {
 
 
-	void printTest() {
-		IJ.log("Test");
-	}
-
+	
 	void excludeEdgesRoi(Roi roi, ImageProcessor maskROI, ImageProcessor channelMask) {
 
 		channelMask.setValue(255);
@@ -42,11 +39,17 @@ public class IfFunctions {
 
 		FloodFiller flood = new FloodFiller(channelMask);
 		Polygon pol = roi.getPolygon();
-		int x = pol.xpoints[0];
-		int y = pol.ypoints[0];
-
-		channelMask.setValue(100);
-		flood.fill8(x, y);
+		
+		for (int i = 0; i < pol.xpoints.length;i++){
+			int x = pol.xpoints[i];
+			int y = pol.ypoints[i];
+			int pixel = channelMask.getPixel(x, y);
+			if (pixel != 100){
+				channelMask.setValue(100);
+				flood.fill8(x, y);
+			}		
+		}
+		
 
 		int width = channelMask.getWidth();
 		int height = channelMask.getHeight();
@@ -127,10 +130,10 @@ public class IfFunctions {
 			while (randomIter < max) {
 				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
 				// clusterRect.width);
-				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width + 1);
+				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
 				// int randomLeft = (int) ((float) Math.random() * (M -
 				// clusterRect.width));
-				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height + 1);
+				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
 				// int randomTop = (int) ((float) Math.random() * (N -
 				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
@@ -236,10 +239,10 @@ public class IfFunctions {
 			while (randomIter < max) {
 				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
 				// clusterRect.width);
-				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width + 1);
+				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
 				// int randomLeft = (int) ((float) Math.random() * (M -
 				// clusterRect.width));
-				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height + 1);
+				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
 				// int randomTop = (int) ((float) Math.random() * (N -
 				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
@@ -370,10 +373,10 @@ public class IfFunctions {
 			while (randomIter < max) {
 				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
 				// clusterRect.width);
-				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width + 1);
+				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
 				// int randomLeft = (int) ((float) Math.random() * (M -
 				// clusterRect.width));
-				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height + 1);
+				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
 				// int randomTop = (int) ((float) Math.random() * (N -
 				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
@@ -531,13 +534,13 @@ public class IfFunctions {
 			int max = 100000;
 			int randomIter = 0;
 
-			while (randomIter < max) {
+			while (randomIter < max) { 
 				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
 				// clusterRect.width);
-				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width + 1);
+				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
 				// int randomLeft = (int) ((float) Math.random() * (M -
 				// clusterRect.width));
-				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height + 1);
+				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
 				// int randomTop = (int) ((float) Math.random() * (N -
 				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
