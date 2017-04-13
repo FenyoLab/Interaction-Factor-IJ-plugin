@@ -13,7 +13,6 @@ import ij.plugin.PlugIn;
 import ij.process.*;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.Recorder;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -25,7 +24,32 @@ import ij.io.FileSaver;
 import java.awt.event.*;
 import java.awt.Color;
 import ij.gui.ProgressBar;
-import ij.Macro;
+
+/*Copyright (C) 2017  Keria Bermudez-Hernandez and Sarah Keegan 
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+/*
+This plugin provides a method for quantifying protein-protein interactions by using stochastic modeling of super-resolution fluorescence microscopy data (RGB images). 
+The result is an unbiased measure of co-localization of protein clusters, independent of cluster density and comparable across images. 
+Please refer to manuscript (REF) and documentation for a detailed description of the Interaction Factor.
+*/
+
+
+
 
 public class Interaction_Factor implements PlugIn, DialogListener {
 
@@ -284,11 +308,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 							fs.excludeEdges(roi, ipMask, ipCh2Mask);
 						}
 					}
-					//fs.setClustersOverlay(im, ipCh1Mask,  ipCh2Mask);
 					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
 					Color stColor = Color.WHITE;
-					Color fColor = new Color((float)1.0,(float)1.0,(float)1.0,(float)1.0);
-					//chsOverlays.setFillColor(fColor);
 					chsOverlays.setStrokeColor(stColor);
 					im.setOverlay(chsOverlays);
 				}
@@ -300,9 +321,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		}
 		else
 		{
-
 			gd.repaint();
-			//IJ.log("Started IF Plugin...");
 		}
 		return true;
 	}
@@ -464,7 +483,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		
 		 
 		  if (Recorder.record){
-				//Recorder.recordCall("Interaction Factor",options);
 				Recorder.recordOption("channel_1(ch1)_color",ch1ColorStr);
 				Recorder.recordOption("channel_2(ch2)_color",ch2ColorStr);
 				Recorder.recordOption("threshold",thMethodIntStr);
@@ -559,12 +577,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		String imagedir = ".";
 		if (simImageOption){
 			DirectoryChooser chooser = new DirectoryChooser("Choose directory to process");
-			//chooser.setDefaultDirectory(imagedir);
 			imagedir = chooser.getDirectory();
-			//OpenDialog chooser = new OpenDialog("Choose directory for Saved Simulations", imagedir);
-			//imagedir= IJ.getDirectory("Choose directory for Saved Simulations");//chooser.getDirectory();
-			//IJ.getDirectory("Choose directory for Saved Simulations");
-
 		}
 		IfFunctions fs = new IfFunctions();
 
@@ -714,8 +727,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			Analyzer.setResultsTable(summary);
 		}
 		ResultsTable rTable = new ResultsTable();
+		
 		// Generate overlap mask
-
 		ipOverlaps.copyBits(ipCh1Mask, 0, 0, Blitter.COPY);
 		ipOverlaps.copyBits(ipCh2Mask, 0, 0, Blitter.AND);
 
@@ -725,10 +738,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		List<Rectangle> overlapsRect = new ArrayList<Rectangle>();
 
 		int overlapCount = fs.clustersProcessing(name, true, rTable, cal, ipFlood, ipOverlaps, overlaps, overlapsRect);
-		/*
-		 * int ch1Overlaps = overlapCount(ipCh1Mask, ipCh2Mask); int ch2Overlaps
-		 * = overlapCount(ipCh2Mask, ipCh1Mask);
-		 */
 
 		// Ch1 clusters
 		ImageProcessor ipCh1Flood = ipCh1Mask.duplicate();
@@ -819,8 +828,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			IJ.showProgress(i, 50);
 			String nSimulation = Integer.toString(i+1);
 			IJ.showStatus("Running IF..."+nSimulation+"/50");
-			
-			//IJ.log("Running IF..."+nSimulation+"/50");
 			
 			ImageProcessor ipCh1Random;
 			if (moveCh1Clusters){
@@ -1093,14 +1100,6 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 		// start ImageJ
 		new ImageJ();
-
-		// open sample
-		ImagePlus nucleus = IJ.openImage(
-				"/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/Cells/cell-1_1/cell-1_1_ROI.tif");
-		ImagePlus image = IJ.openImage("/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/Cells/cell-1_1/cell-1_1_R_G.tif");
-		//ImagePlus image = IJ.openImage("/Users/keriabermudez/Dropbox/David_Fenyos_Lab/Image_Analysis/Testing_random_py/Test/Yandongs/Untreated/images/ellipse_sims_Sept_2016/ellipses_sims/04_IF_90_c1n_200_c1a_100_c2n_100_c2a_100_c12_sim_mask.tif");
-		image.show();
-		nucleus.show();
 
 	}
 

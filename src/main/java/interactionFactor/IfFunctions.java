@@ -1,33 +1,38 @@
 package interactionFactor;
 
-import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
-import ij.Prefs;
-import ij.gui.GenericDialog;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.Wand;
-import ij.io.DirectoryChooser;
-import ij.io.FileSaver;
 import ij.measure.ResultsTable;
-import ij.plugin.PlugIn;
 import ij.process.*;
-import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.RoiManager;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.awt.*;
 import ij.measure.Calibration;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.Arrays;
 import ij.gui.Overlay;
 
-/**
- * Created by keriabermudez on 10/27/16.
- */
+/*Copyright (C) 2017  Keria Bermudez-Hernandez and Sarah Keegan 
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+/*
+These are the functions used in Interaction Factor Sims and Interaction Factor plugins.
+*/
+
 public class IfFunctions {
 
 
@@ -128,14 +133,8 @@ public class IfFunctions {
 			int randomIter = 0;
 
 			while (randomIter < max) {
-				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
-				// clusterRect.width);
 				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
-				// int randomLeft = (int) ((float) Math.random() * (M -
-				// clusterRect.width));
 				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
-				// int randomTop = (int) ((float) Math.random() * (N -
-				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
 				int randomBottom = randomTop + clusterRect.height;
 
@@ -237,14 +236,8 @@ public class IfFunctions {
 			int randomIter = 0;
 
 			while (randomIter < max) {
-				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
-				// clusterRect.width);
 				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
-				// int randomLeft = (int) ((float) Math.random() * (M -
-				// clusterRect.width));
 				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
-				// int randomTop = (int) ((float) Math.random() * (N -
-				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
 				int randomBottom = randomTop + clusterRect.height;
 
@@ -351,173 +344,7 @@ public class IfFunctions {
 		return ipSimulation;
 	}
 	
-	ImageProcessor simNonRandomOneOne(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
-		ImageProcessor ipCh1Random, List<ImageProcessor> ch2Clusters,
-		List<Rectangle> ch2ClustersRect, double interFactor,int th_other) {
-		
-		ImageProcessor chMaskFlood = ipCh1Random.duplicate();
-		Wand wand = new Wand(chMaskFlood);
-		
-		int M = roiMask.getWidth();
-		int N = roiMask.getHeight();
-		ImageProcessor ipSimulation = new ByteProcessor(M, N); // ip for ch2
-																// mask
-		for (int i = 0; i < ch2Clusters.size(); i++) {
-
-			Rectangle clusterRect = ch2ClustersRect.get(i);// ip for ch2 mask
-			ImageProcessor cluster = ch2Clusters.get(i);
-			int max = 100000;
-			int randomIter = 0;
-			boolean marked = false;
-
-			while (randomIter < max) {
-				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
-				// clusterRect.width);
-				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
-				// int randomLeft = (int) ((float) Math.random() * (M -
-				// clusterRect.width));
-				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
-				// int randomTop = (int) ((float) Math.random() * (N -
-				// clusterRect.height));
-				int randomRight = randomLeft + clusterRect.width;
-				int randomBottom = randomTop + clusterRect.height;
-
-				boolean overlapSelf = true;
-				boolean overlapOther = false;
-				int surrounding_pixels = 0;
-				
-				Outer:
-				for (int v = randomTop; v < randomBottom; v++) {
-					for (int u = randomLeft; u < randomRight; u++) {
-						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
-							if (roiMask.getPixel(u, v) != 255) {
-								overlapSelf = true;
-								break Outer;
-							}
-							surrounding_pixels += ipSimulation.getPixel(u, v); // N
-																				// is
-																				// height
-																				// ,
-																				// M
-																				// is
-																				// width
-							if (u + 1 < maximumX) {
-								surrounding_pixels += ipSimulation.getPixel(u + 1, v);
-							}
-							if (u - 1 > minimumX) {
-								surrounding_pixels += ipSimulation.getPixel(u - 1, v);
-							}
-							if (v + 1 < maximumY) {
-								surrounding_pixels += ipSimulation.getPixel(u, v + 1);
-							}
-							if (v - 1 > minimumY) {
-								surrounding_pixels += ipSimulation.getPixel(u, v - 1);
-							}
-							if ((u + 1 < maximumX) && (v + 1 < maximumY)) {
-								surrounding_pixels += ipSimulation.getPixel(u + 1, v + 1);
-							}
-							if ((u - 1 > minimumX) && (v - 1 > minimumY)) {
-								surrounding_pixels += ipSimulation.getPixel(u - 1, v - 1);
-							}
-							if ((u - 1 > minimumX) && (v + 1 < maximumY)) {
-								surrounding_pixels += ipSimulation.getPixel(u - 1, v + 1);
-							}
-							if ((u + 1 < maximumX) && (v - 1 > minimumY)) {
-								surrounding_pixels += ipSimulation.getPixel(u + 1, v - 1);
-							}
-							// checking surrounding pixels
-							if (surrounding_pixels == 0) {
-								overlapSelf = false;
-							} else {
-								overlapSelf = true;
-								break Outer;
-							}
-						}
-					}
-				}
-				if (overlapSelf == false) {
-					Outer:
-					for (int v = randomTop; v < randomBottom; v++) {
-						for (int u = randomLeft; u < randomRight; u++) {
-							if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
-								int pOtherMarked  = chMaskFlood.getPixel(u, v);
-								if (pOtherMarked == 200) {
-									overlapSelf = true;
-									break Outer;// this could be changed
-								}
-								int pOther = ipCh1Random.getPixel(u, v);
-								if (pOther > th_other) {
-									overlapOther = true;
-									break Outer;// this could be changed
-								}
-								else{
-									overlapOther = false; // 
-									}
-							}
-						}
-					}
-				}
-				if (overlapSelf == false && overlapOther == true){
-					//change pixel
-                    for (int v = randomTop; v < randomBottom; v++) {
-                        for (int u = randomLeft; u < randomRight; u++) {
-                            if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
-                            	if (marked == false){
-                            		int pOtherMarked  = chMaskFlood.getPixel(u, v);
-                            		if (pOtherMarked == 255){
-                            			wand.autoOutline(u, v, 255, 255,8);
-                    					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
-                    					// Then add the image processor of intensity to the list
-                    					chMaskFlood.setRoi(roi_par);
-                    					chMaskFlood.setValue(200);
-                    					chMaskFlood.fill(roi_par);
-                    					marked = true;
-                            		}
-                            		
-                            	}
-       
-                                int p = cluster.getPixel(u - randomLeft, v - randomTop);
-                                ipSimulation.putPixel(u, v, p);
-                            }
-                        }
-                    }
-                    randomIter = max; 
-				}
-				if (overlapSelf == false && overlapOther == false){
-                    double random =  Math.random();
-                    if (random  > interFactor){                 
-                        //change pixel
-                        for (int v = randomTop; v < randomBottom; v++) {
-                            for (int u = randomLeft; u < randomRight; u++) {
-                                if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
-                                	if (marked == false){
-                                		int pOtherMarked  = chMaskFlood.getPixel(u, v);
-                                		if (pOtherMarked == 255){
-                                			wand.autoOutline(u, v, 255, 255,8);
-                        					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
-                        					// Then add the image processor of intensity to the list
-                        					chMaskFlood.setRoi(roi_par);
-                        					chMaskFlood.setValue(200);
-                        					chMaskFlood.fill(roi_par);
-                        					marked = true;
-                                		}
-                                	}
-                                	int p = cluster.getPixel(u - randomLeft, v - randomTop);
-                                    ipSimulation.putPixel(u, v, p);
-                                }
-                            }
-                        }
-                        randomIter = max;
-                    }
-				}
-				randomIter++;
-			}
-		}
-
-		return ipSimulation;
-	}
-
-
+	
 	ImageProcessor simRandom(ImageProcessor roiMask, int minimumX, int maximumX, int minimumY, int maximumY,
 			List<ImageProcessor> clusters, List<Rectangle> clustersRect) {
 
@@ -535,14 +362,8 @@ public class IfFunctions {
 			int randomIter = 0;
 
 			while (randomIter < max) { 
-				// int randomLeft = minimumX + (int)(Math.random() * maximumX-
-				// clusterRect.width);
 				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
-				// int randomLeft = (int) ((float) Math.random() * (M -
-				// clusterRect.width));
 				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
-				// int randomTop = (int) ((float) Math.random() * (N -
-				// clusterRect.height));
 				int randomRight = randomLeft + clusterRect.width;
 				int randomBottom = randomTop + clusterRect.height;
 
@@ -819,7 +640,6 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 								countCluster++;
 							}
 						}
-						//IJ.log(Integer.toString(countCluster));
 						ipFloodCh2.setRoi(roi_par);
 						ipFloodCh2.setValue(100);
 						ipFloodCh2.fill(roi_par);
@@ -863,7 +683,6 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					wandCh1.autoOutline(u, v, 255, 255);
 					PolygonRoi roi_par = new PolygonRoi(wandCh1.xpoints, wandCh1.ypoints, wandCh1.npoints, Roi.POLYGON);
 					ovCh.add(roi_par);
-					// im.setOverlay(roi_par,blue_color,3,blue_color);
 				}
 			}
 		}
@@ -875,20 +694,16 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					wandCh2.autoOutline(u, v, 255, 255);
 					PolygonRoi roi_par = new PolygonRoi(wandCh2.xpoints, wandCh2.ypoints, wandCh2.npoints, Roi.POLYGON);
 					ovCh.add(roi_par);
-					// im.setOverlay(roi_par,red_color,3,red_color);
 				}
 			}
 		}
 		Color test_color = Color.WHITE;
 		ovCh.setStrokeColor(test_color);
-		// im.setOverlay(ovCh1);
-		// ovCh2.setStrokeColor(red_color);
 		im.setOverlay(ovCh);
 
 	}
 	Overlay returnOverlay(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 
-		// Color red_color = new Color( 255, 0, 0);
 		Overlay ovCh = new Overlay();
 
 		int M = ipCh1Mask.getWidth();
@@ -901,9 +716,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					wandCh1.autoOutline(u, v, 255, 255);
 					PolygonRoi roi_par = new PolygonRoi(wandCh1.xpoints, wandCh1.ypoints, wandCh1.npoints, Roi.POLYGON);
 					ovCh.addElement(roi_par);
-					
-					// im.setOverlay(roi_par,blue_color,3,blue_color);
-				}
+									}
 			}
 		}
 		Wand wandCh2 = new Wand(ipCh2Mask);
@@ -914,7 +727,6 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					wandCh2.autoOutline(u, v, 255, 255);
 					PolygonRoi roi_par = new PolygonRoi(wandCh2.xpoints, wandCh2.ypoints, wandCh2.npoints, Roi.POLYGON);
 					ovCh.addElement(roi_par);
-					// im.setOverlay(roi_par,red_color,3,red_color);
 				}
 			}
 		}

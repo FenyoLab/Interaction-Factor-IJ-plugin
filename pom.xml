@@ -17,13 +17,13 @@
 	<version>0.5.3</version>
 
 	<name>plugins/Interaction_Factor_Package.jar</name>
-	<description>This plugin performs colocalization analysis and generates simulations based on experimental data</description>
+	<description>This plugin provides a method for quantifying protein-protein interactions by using stochastic modeling of super-resolution fluorescence microscopy data (RGB images). The result is an unbiased measure of co-localization of protein clusters, independent of cluster density and comparable across images.</description>
 
 	<developers>
 		<developer>
-			<name>Keria Bermudez</name>
-			<email>keria.bermudez@gmail.com</email>
-			<url>http://kbermudez.com</url>
+			<name>Keria Bermudez-Hernandez</name>
+			<email>kb1139@nyu.edu</email>
+			<url>www.FenyoLab.org</url>
 			<organization>NYU Langone Medical Center</organization>
 			<roles>
 				<role>architect</role>
@@ -31,6 +31,7 @@
 			</roles>
 			<timezone>-6</timezone>
 		</developer>
+        
 	</developers>
 
 
