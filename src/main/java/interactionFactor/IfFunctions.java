@@ -125,12 +125,21 @@ public class IfFunctions {
 		int N = roiMask.getHeight();
 		ImageProcessor ipSimulation = new ByteProcessor(M, N); // ip for ch2
 																// mask
-		for (int i = 0; i < ch2Clusters.size(); i++) {
+//		int blank_clusters = 0;
+		for (int i = 0; i < ch2Clusters.size(); i++)
+		{
 
 			Rectangle clusterRect = ch2ClustersRect.get(i);// ip for ch2 mask
 			ImageProcessor cluster = ch2Clusters.get(i);
 			int max = 100000;
 			int randomIter = 0;
+
+//			int[] hist = cluster.getHistogram();
+//			if(hist[0] == cluster.getPixelCount())
+//			{
+//				blank_clusters = blank_clusters+1;
+//				continue;
+//			}
 
 			while (randomIter < max) {
 				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
@@ -353,7 +362,7 @@ public class IfFunctions {
 
 		ImageProcessor ipSimulation = new ByteProcessor(M, N); // ip for ch2
 																// mask
-
+//		int blank_clusters = 0;
 		for (int i = 0; i < clusters.size(); i++) {
 
 			Rectangle clusterRect = clustersRect.get(i);// ip for ch2 mask
@@ -361,7 +370,15 @@ public class IfFunctions {
 			int max = 100000;
 			int randomIter = 0;
 
-			while (randomIter < max) { 
+//			int[] hist = cluster.getHistogram();
+//			if(hist[0] == cluster.getPixelCount())
+//			{
+//				blank_clusters = blank_clusters+1;
+//				continue;
+//			}
+
+			while (randomIter < max)
+			{
 				int randomLeft = ThreadLocalRandom.current().nextInt(minimumX, maximumX - clusterRect.width);
 				int randomTop = ThreadLocalRandom.current().nextInt(minimumY, maximumY - clusterRect.height);
 				int randomRight = randomLeft + clusterRect.width;
@@ -372,7 +389,8 @@ public class IfFunctions {
 
 				Outer: for (int v = randomTop; v < randomBottom; v++) {
 					for (int u = randomLeft; u < randomRight; u++) {
-						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
+						if (cluster.getPixel(u - randomLeft, v - randomTop) > 0)
+						{
 							if (roiMask.getPixel(u, v) != 255) {
 								overlapSelf = true;
 								break Outer;
@@ -417,7 +435,8 @@ public class IfFunctions {
 						}
 					}
 				}
-				if (overlapSelf == false) { // random factor is 0
+				if (overlapSelf == false)
+				{ // random factor is 0
 					for (int v = randomTop; v < randomBottom; v++) {
 						for (int u = randomLeft; u < randomRight; u++) {
 							if (cluster.getPixel(u - randomLeft, v - randomTop) > 0) {
@@ -761,8 +780,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					ImageProcessor roi_parMask = roi_par.getMask();
 
 					Rectangle region_r = roi_par.getBounds();
-					clustersRect.add(region_r);// adding to list of rectangle
-												// rois
+
 					// new image processor of intensity
 
 					// ROI corner coordinates:
@@ -772,38 +790,54 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 					int rBottom = rTop + region_r.height;
 
 					// process all pixels inside the ROI
+					int num_nonzero = 0;
 					for (int y = rTop; y < rBottom; y++) {
 						for (int x = rLeft; x < rRight; x++) {
 							if (roi_parMask.getPixel(x - rLeft, y - rTop) > 0) {
 								int pixel = channel.getPixel(x, y);
+								if(pixel > 0)
+								{
+									num_nonzero = num_nonzero+1;
+								}
 								roi_parMask.putPixel(x - rLeft, y - rTop, pixel);
 
 							}
 						}
 					}
-					clusters.add(roi_parMask);
+					if(num_nonzero > 0)
+					{
 
-					// Then add the image processor of intensity to the list
-					ipFlood.setRoi(roi_par);
-					ipFlood.setValue(200);
-					ipFlood.fill(roi_par);
-					count++;
+						clusters.add(roi_parMask);
 
-					// adding the results
-					
-					if (results) {
-					    ImageStatistics stats = ipFlood.getStatistics();
-						rt.incrementCounter();
-						rt.addValue("Image", imageName);
-						rt.addValue("Number Pixels", stats.area);
-						rt.addValue("Area", stats.area * calConvert);
-						rt.addValue("CentroidX", stats.xCentroid * pixelWidth);
-						rt.addValue("CentroidY", stats.yCentroid * pixelHeight);
+						clustersRect.add(region_r);// adding to list of rectangle
+						// rois
+
+						// Then add the image processor of intensity to the list
+						ipFlood.setRoi(roi_par);
+						ipFlood.setValue(200);
+						ipFlood.fill(roi_par);
+						count++;
+
+						// adding the results
+
+						if (results) {
+							ImageStatistics stats = ipFlood.getStatistics();
+							rt.incrementCounter();
+							rt.addValue("Image", imageName);
+							rt.addValue("Number Pixels", stats.area);
+							rt.addValue("Area", stats.area * calConvert);
+							rt.addValue("CentroidX", stats.xCentroid * pixelWidth);
+							rt.addValue("CentroidY", stats.yCentroid * pixelHeight);
+						}
 					}
-
+					else
+					{
+						int xx = 0;
+					}
 				}
 			}
 		}
+
 		return count;
 	}
 

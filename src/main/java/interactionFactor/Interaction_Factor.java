@@ -72,6 +72,13 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private boolean edgeOption = false;
 	private boolean moveCh1Clusters = true ;
 
+	private boolean thManualOption = false;
+	private int thManual_ch1Level = 0;
+	private int thManual_ch2Level = 0;
+
+	//option to Not calculate IF at all but to just output the coloc measurements
+	private boolean calcIFOption = true;
+
 	//Measurement Options
 	private boolean overlapsOpt = false ;
 	private boolean overlapsPercOpt = false ;
@@ -115,7 +122,13 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					 ch2Color = choice1.getSelectedIndex();
 					Choice choice2 = (Choice) gd.getChoices().get(2);
 					 thMethodInt = choice2.getSelectedIndex();
-					
+
+					Vector numFields = gd.getNumericFields();
+					TextField numField0 = (TextField) numFields.get(0);
+					TextField numField1 = (TextField) numFields.get(1);
+					thManual_ch1Level = Integer.parseInt(numField0.getText());
+					thManual_ch2Level = Integer.parseInt(numField1.getText());
+
 					Vector checkboxes = gd.getCheckboxes();
 					
 					Checkbox check0 = (Checkbox) checkboxes.get(0);
@@ -137,35 +150,39 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					Checkbox check16 = (Checkbox) checkboxes.get(16);
 					Checkbox check17 = (Checkbox) checkboxes.get(17);
 					Checkbox check18 = (Checkbox) checkboxes.get(18);
+					Checkbox check19 = (Checkbox) checkboxes.get(19);
+					Checkbox check20 = (Checkbox) checkboxes.get(20);
 
-					 edgeOption = check0.getState();
-					 moveCh1Clusters = check1.getState();
+					 thManualOption = check0.getState();
+					 edgeOption = check1.getState();
+					 calcIFOption = check2.getState();
+					 moveCh1Clusters = check3.getState();
 					
-					 areaOption = check2.getState();
-					 areaRoiOption = check3.getState();
+					 areaOption = check4.getState();
+					 areaRoiOption = check5.getState();
 
-					 sumIntOption = check4.getState();
-					 sumIntThOption = check5.getState();
-					 meanIntThOption = check6.getState();
+					 sumIntOption = check6.getState();
+					 sumIntThOption = check7.getState();
+					 meanIntThOption = check8.getState();
 					
-					 ch1StoiOption = check7.getState();
-					 ch2StoiOption = check8.getState();
+					 ch1StoiOption = check9.getState();
+					 ch2StoiOption = check10.getState();
 					
-					 overlapsOpt = check9.getState();
-					 overlapsPercOpt = check10.getState();
-					 overlapsCountOpt = check11.getState();
-					 overlapsAreaOpt = check12.getState();
+					 overlapsOpt = check11.getState();
+					 overlapsPercOpt = check12.getState();
+					 overlapsCountOpt = check13.getState();
+					 overlapsAreaOpt = check14.getState();
 					
-					 simImageOption = check13.getState();
-					 ch1MaskOption = check14.getState();
-					 ch2MaskOption = check15.getState();
-					 roiMaskOption = check16.getState();
-					 overlapMaskOption = check17.getState();
-					 overlapLocations = check18.getState();
+					 simImageOption = check15.getState();
+					 ch1MaskOption = check16.getState();
+					 ch2MaskOption = check17.getState();
+					 roiMaskOption = check18.getState();
+					 overlapMaskOption = check19.getState();
+					 overlapLocations = check20.getState();
 					
-					run_IF(ch1Color,ch2Color,thMethodInt,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,overlapsPercOpt,overlapsCountOpt,
-							overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,ch2MaskOption,roiMaskOption,
-							overlapMaskOption,overlapLocations);
+					run_IF(ch1Color,ch2Color,thMethodInt,thManualOption,thManual_ch1Level,thManual_ch2Level,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,
+							overlapsPercOpt,overlapsCountOpt,overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,
+							ch2MaskOption,roiMaskOption, overlapMaskOption,overlapLocations);
 					
 				}
 				if(command == "Apply Overlay")
@@ -178,11 +195,19 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					
 					Choice choice2 = (Choice) gd.getChoices().get(2);
 					int thMethodInt = choice2.getSelectedIndex();
+
+					Vector numFields = gd.getNumericFields();
+					TextField numField0 = (TextField) numFields.get(0);
+					TextField numField1 = (TextField) numFields.get(1);
+					int thManual_ch1Level = Integer.parseInt(numField0.getText());
+					int thManual_ch2Level = Integer.parseInt(numField1.getText());
 					
 					//checkbox
 					Vector checkboxes = gd.getCheckboxes();
 					Checkbox check0 = (Checkbox) checkboxes.get(0);
-					boolean edgeOption = check0.getState();
+					Checkbox check1 = (Checkbox) checkboxes.get(1);
+					boolean thManualOption = check0.getState();
+					boolean edgeOption = check1.getState();
 
 					IfFunctions fs = new IfFunctions();
 
@@ -281,21 +306,27 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					ImageProcessor ipCh1Mask = ipCh1.duplicate();
 					ImageProcessor ipCh2Mask = ipCh2.duplicate();
 
-					AutoThresholder autoth = new AutoThresholder();
+					int th_ch1 = thManual_ch1Level;
+					int th_ch2 = thManual_ch2Level;
+					if(!thManualOption)
+					{
+						AutoThresholder autoth = new AutoThresholder();
 
-					// Threshold ch1 channel
-					ipCh1Mask.setMask(ipMask);
-					int[] ch1_hist = ipCh1Mask.getHistogram();
-					int th_ch1 = autoth.getThreshold(method, ch1_hist);
+						// Threshold ch1 channel
+						ipCh1Mask.setMask(ipMask);
+						int[] ch1_hist = ipCh1Mask.getHistogram();
+						th_ch1 = autoth.getThreshold(method, ch1_hist);
+
+
+						// Threshold ch2 channel
+						ipCh2Mask.setMask(ipMask);
+						int[] ch2_hist = ipCh2Mask.getHistogram();
+						th_ch2 = autoth.getThreshold(method, ch2_hist);
+
+					}
 					ipCh1Mask.threshold(th_ch1);
-
-					// Threshold ch2 channel
-
-					ipCh2Mask.setMask(ipMask);
-					int[] ch2_hist = ipCh2Mask.getHistogram();
-					int th_ch2 = autoth.getThreshold(method, ch2_hist);
 					ipCh2Mask.threshold(th_ch2);
-					
+
 					IJ.setThreshold(im, th_ch2, 255,"Red");
 					im.updateAndDraw();
 					
@@ -333,6 +364,12 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
 		 edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
 		 moveCh1Clusters = Prefs.get(PREF_KEY + "moveOption", true);
+
+		 thManualOption = Prefs.get(PREF_KEY + "thManualOption",false);
+		 thManual_ch1Level = (int) Prefs.get(PREF_KEY + "thManual_ch1Level",0);
+		 thManual_ch2Level = (int) Prefs.get(PREF_KEY + "thManual_ch2Level",0);
+
+		 calcIFOption = Prefs.get(PREF_KEY + "calcIFOption",false);
 
 		//Measurement Options
 		 overlapsOpt = Prefs.get(PREF_KEY + "overlapsOpt", true);
@@ -385,6 +422,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.addChoice("Channel_1(Ch1)_Color:", channels, channels[ch1Color]);
 		gd.addChoice("Channel_2(Ch2)_Color:", channels, channels[ch2Color]);
 		gd.addChoice("Threshold:", thMethods, thMethods[thMethodInt]);
+		gd.addCheckbox("Use_Manual_Threshold", thManualOption);
+		gd.addNumericField("Channel_1_Threshold", thManual_ch1Level, 0);
+		gd.addNumericField("Channel_2_Threshold", thManual_ch2Level, 0);
 		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
 
 		// ***** Apply and Remove Overlay Buttons *****
@@ -402,8 +442,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		// *****
 		
 		gd.addMessage("--------------- IF Parameter ---------------\n");
+		gd.addCheckbox("Calculate_the_IF", calcIFOption);
 		gd.addCheckbox("Move_Ch1_Clusters", moveCh1Clusters);
-		
+
 		gd.addMessage("----------- Additional Measurements --------\n");
 		gd.addCheckboxGroup(6, 2, measurements, measurVals);
 		
@@ -450,9 +491,13 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 				thMethodInt = i;
 			}
 		}
-		
+
+		 thManualOption = gd.getNextBoolean();
+		 thManual_ch1Level = (int) gd.getNextNumber();
+		 thManual_ch2Level = (int) gd.getNextNumber();
 		
 		 edgeOption = gd.getNextBoolean();
+		 calcIFOption = gd.getNextBoolean();
 		 moveCh1Clusters = gd.getNextBoolean();
 		
 		 areaOption = gd.getNextBoolean();
@@ -477,18 +522,29 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 overlapMaskOption = gd.getNextBoolean();
 		 overlapLocations = gd.getNextBoolean();
 
-		 run_IF(ch1Color,ch2Color,thMethodInt,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,overlapsPercOpt,overlapsCountOpt,
-				overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,ch2MaskOption,roiMaskOption,
-				overlapMaskOption,overlapLocations);
+		 run_IF(ch1Color,ch2Color,thMethodInt,thManualOption,thManual_ch1Level,thManual_ch2Level,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,
+				 overlapsPercOpt,overlapsCountOpt,overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,
+				 ch2MaskOption,roiMaskOption,overlapMaskOption,overlapLocations);
 		
 		 
 		  if (Recorder.record){
 				Recorder.recordOption("channel_1(ch1)_color",ch1ColorStr);
 				Recorder.recordOption("channel_2(ch2)_color",ch2ColorStr);
 				Recorder.recordOption("threshold",thMethodIntStr);
+
+			  	Recorder.recordOption("Channel_1_Threshold",Integer.toString(thManual_ch1Level));
+			  	Recorder.recordOption("Channel_2_Threshold",Integer.toString(thManual_ch2Level));
+
+			    if (thManualOption){
+					Recorder.recordOption("Use_Manual_Threshold");
+				}
+
 				if (edgeOption){
 					Recorder.recordOption("Exclude_Edge_Clusters");
 				}
+			    if (calcIFOption){
+				    Recorder.recordOption("Calculate_the_IF");
+			    }
 				if (moveCh1Clusters){
 					Recorder.recordOption("Move_Ch1_Clusters");
 				}
@@ -539,9 +595,10 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	}
 	
 	
-	public void run_IF(int ch1Color,int ch2Color,int thMethodInt,boolean edgeOption,boolean moveCh1Clusters,boolean areaOption,boolean areaRoiOption,boolean overlapsOpt,boolean overlapsPercOpt,boolean overlapsCountOpt,
-			boolean overlapsAreaOpt,boolean sumIntOption,boolean sumIntThOption,boolean meanIntThOption,boolean ch1StoiOption,boolean ch2StoiOption,boolean simImageOption,boolean ch1MaskOption,boolean ch2MaskOption,boolean roiMaskOption,
-			boolean overlapMaskOption,boolean overlapLocations)
+	public void run_IF(int ch1Color,int ch2Color,int thMethodInt,boolean thManualOption, int thManual_ch1Level, int thManual_ch2Level,
+					    boolean edgeOption,boolean moveCh1Clusters,boolean areaOption,boolean areaRoiOption,boolean overlapsOpt,boolean overlapsPercOpt,boolean overlapsCountOpt,
+						boolean overlapsAreaOpt,boolean sumIntOption,boolean sumIntThOption,boolean meanIntThOption,boolean ch1StoiOption,boolean ch2StoiOption,boolean simImageOption,
+					    boolean ch1MaskOption,boolean ch2MaskOption,boolean roiMaskOption, boolean overlapMaskOption,boolean overlapLocations)
 	{
 		
 		IJ.showProgress(0.0);
@@ -554,6 +611,12 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		Prefs.set(PREF_KEY + "moveOption", moveCh1Clusters);
 		Prefs.set(PREF_KEY+"areaOption", areaOption);
 		Prefs.set(PREF_KEY+"areaRoiOption", areaRoiOption);
+
+		Prefs.set(PREF_KEY+"thManualOption", thManualOption);
+		Prefs.set(PREF_KEY + "thManual_ch1Level", thManual_ch1Level);
+		Prefs.set(PREF_KEY + "thManual_ch2Level", thManual_ch2Level);
+
+		Prefs.set(PREF_KEY+"calcIFOption", calcIFOption);
 
 		//Measurements
 		Prefs.set(PREF_KEY + "overlapsOpt", overlapsOpt);
@@ -592,6 +655,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			IJ.error("Channel Colors are the same. Choose another channel");
 			return;
 		}
+
+		//TODO add check if (thManualOption is true, make sure thManual_ch1Level,thManual_ch2Level are in bounds
 
 		String name = im.getShortTitle();
 		AutoThresholder.Method method = methods[thMethodInt];
@@ -697,18 +762,25 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		ImageProcessor ipCh1Mask = ipCh1.duplicate();
 		ImageProcessor ipCh2Mask = ipCh2.duplicate();
 
-		AutoThresholder autoth = new AutoThresholder();
+		int th_ch1 = thManual_ch1Level;
+		int th_ch2 = thManual_ch2Level;
+		if(!thManualOption)
+		{
+			AutoThresholder autoth = new AutoThresholder();
 
-		// Threshold ch1 channel
-		ipCh1Mask.setMask(ipMask);
-		int[] ch1_hist = ipCh1Mask.getHistogram();
-		int th_ch1 = autoth.getThreshold(method, ch1_hist);
+			// Threshold ch1 channel
+			ipCh1Mask.setMask(ipMask);
+			int[] ch1_hist = ipCh1Mask.getHistogram();
+			th_ch1 = autoth.getThreshold(method, ch1_hist);
+
+
+			// Threshold ch2 channel
+			ipCh2Mask.setMask(ipMask);
+			int[] ch2_hist = ipCh2Mask.getHistogram();
+			th_ch2 = autoth.getThreshold(method, ch2_hist);
+
+		}
 		ipCh1Mask.threshold(th_ch1);
-
-		// Threshold ch2 channel
-		ipCh2Mask.setMask(ipMask);
-		int[] ch2_hist = ipCh2Mask.getHistogram();
-		int th_ch2 = autoth.getThreshold(method, ch2_hist);
 		ipCh2Mask.threshold(th_ch2);
 
 		if (edgeOption) {
@@ -813,131 +885,136 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		}
 		
 		// Calculating IF
-		
-		// Calculating IF ch1-ch2
+		double pValCh1Ch2 = 0;
+		double pValCh2Ch1 = 0;
+		double IFCh1Ch2 = 0;
+		double IFCh2Ch1 = 0;
+		if(calcIFOption)
+		{
+			// Calculating IF ch1-ch2
 
-		double[] ch2ClustersProbs = new double[ch2Clusters.size()];
-		Arrays.fill(ch2ClustersProbs, 0);
-		double countForPvalCh2 = 0;
-		
-		double[] ch1ClustersProbs = new double[ch1Clusters.size()];
-		Arrays.fill(ch1ClustersProbs, 0);
-		double countForPvalCh1 = 0;
-		
-		for (int i = 0; i < nMaxSimulationsIF; i++) {
-			IJ.showProgress(i, 50);
-			String nSimulation = Integer.toString(i+1);
-			IJ.showStatus("Running IF..."+nSimulation+"/50");
-			
-			ImageProcessor ipCh1Random;
-			if (moveCh1Clusters){
-				 ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
-			}
-			else{
-				 ipCh1Random = ipCh1.duplicate();
-			}
-			
-			ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
-			ipCh1RandomMask.threshold(th_ch1);
-			
-			//generate ch2 channel mask
-			
-			ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1RandomMask, ch2ClustersProbs,
-					ch2Clusters, ch2ClustersRect);
-            
-			//generate ch2 channel mask
-			
-			ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
-			ipCh2RandomMask.threshold(th_ch2);
-			
-			ImageProcessor ipCh1Random2;
-			
-			if (moveCh1Clusters){
-				 ipCh1Random2 = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh2RandomMask, ch1ClustersProbs,
-							ch1Clusters, ch1ClustersRect);
-			}
-			else{
-				 ipCh1Random2 = ipCh1.duplicate();
-			}
-			
-			ImageProcessor ipCh1RandomMask2 = ipCh1Random2.duplicate();
-			ipCh1RandomMask2.threshold(th_ch1);
-			
-			int ch2RandomOverlaps =   fs.ch2ClusterOverlaps(ipCh1RandomMask, ipCh2RandomMask);
-			int ch1RandomOverlaps =  fs.ch2ClusterOverlaps(ipCh2RandomMask, ipCh1RandomMask2);
-			
-			double percOverlapsCh2 = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
-			double percOverlapsCh1 = (double)ch1RandomOverlaps/(double)ch1Clusters.size();
+			double[] ch2ClustersProbs = new double[ch2Clusters.size()];
+			Arrays.fill(ch2ClustersProbs, 0);
+			double countForPvalCh2 = 0;
 
-			if (percOverlapsCh2 >= ch2Percentage){
-				countForPvalCh2 +=1;
-			}
-			if (percOverlapsCh1 >= ch1Percentage){
-				countForPvalCh1 +=1;
-			}
-			
-			if (simImageOption){
-				byte[] redRandom;
-				byte[] greenRandom;
-				byte[] blueRandom;
-				//Red Green
-				if (ch1Color == 0 && ch2Color == 1){
-					redRandom = (byte[]) ipCh1Random.getPixels();
-					greenRandom =(byte[]) ipCh2Random.getPixels();
-					blueRandom = ch3;
+			double[] ch1ClustersProbs = new double[ch1Clusters.size()];
+			Arrays.fill(ch1ClustersProbs, 0);
+			double countForPvalCh1 = 0;
+
+			for (int i = 0; i < nMaxSimulationsIF; i++) {
+				IJ.showProgress(i, 50);
+				String nSimulation = Integer.toString(i+1);
+				IJ.showStatus("Running IF..."+nSimulation+"/50");
+
+				ImageProcessor ipCh1Random;
+				if (moveCh1Clusters){
+					ipCh1Random = fs.simRandom(ipMask, minX, maxX, minY, maxY, ch1Clusters, ch1ClustersRect);
 				}
-				//Green Blue
-				else if (ch1Color == 1 && ch2Color == 0){
-					greenRandom = (byte[]) ipCh1Random.getPixels();
-					redRandom = (byte[]) ipCh2Random.getPixels();
-					blueRandom = ch3;
-				}
-				//Blue Red
-				else if(ch1Color == 2 && ch2Color == 0) {
-					blueRandom= (byte[]) ipCh1Random.getPixels();
-					redRandom = (byte[]) ipCh2Random.getPixels();
-					greenRandom = ch3;
-				}
-				//Red Blue
-				else if(ch1Color == 0 && ch2Color == 2) {
-					redRandom= (byte[]) ipCh1Random.getPixels();
-					blueRandom = (byte[]) ipCh2Random.getPixels();
-					greenRandom = ch3;
-				}
-				//Blue Green
-				else if (ch1Color == 2 && ch2Color == 1 ){
-					blueRandom= (byte[]) ipCh1Random.getPixels();
-					greenRandom = (byte[]) ipCh2Random.getPixels();
-					redRandom = ch3;
-				}
-				//Green Blue
 				else{
-					greenRandom= (byte[]) ipCh1Random.getPixels();
-					blueRandom = (byte[]) ipCh2Random.getPixels();
-					redRandom = ch3;
+					ipCh1Random = ipCh1.duplicate();
 				}
-				//Color Simulation
-				ColorProcessor ipSimulation = new ColorProcessor(M, N);
 
-				ipSimulation.setRGB(redRandom, greenRandom, blueRandom);
-				ImagePlus colorRandIm = new ImagePlus(name + "_Sim" + nSimulation, ipSimulation);
-				FileSaver fileSave = new FileSaver(colorRandIm);
-				fileSave.saveAsTiff(imagedir+name+"_Sim" + nSimulation+".tiff");
+				ImageProcessor ipCh1RandomMask = ipCh1Random.duplicate();
+				ipCh1RandomMask.threshold(th_ch1);
+
+				//generate ch2 channel mask
+
+				ImageProcessor ipCh2Random = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh1RandomMask, ch2ClustersProbs,
+						ch2Clusters, ch2ClustersRect);
+
+				//generate ch2 channel mask
+
+				ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
+				ipCh2RandomMask.threshold(th_ch2);
+
+				ImageProcessor ipCh1Random2;
+
+				if (moveCh1Clusters){
+					ipCh1Random2 = fs.simRandomProb(ipMask, minX, maxX, minY, maxY, ipCh2RandomMask, ch1ClustersProbs,
+							ch1Clusters, ch1ClustersRect);
+				}
+				else{
+					ipCh1Random2 = ipCh1.duplicate();
+				}
+
+				ImageProcessor ipCh1RandomMask2 = ipCh1Random2.duplicate();
+				ipCh1RandomMask2.threshold(th_ch1);
+
+				int ch2RandomOverlaps =   fs.ch2ClusterOverlaps(ipCh1RandomMask, ipCh2RandomMask);
+				int ch1RandomOverlaps =  fs.ch2ClusterOverlaps(ipCh2RandomMask, ipCh1RandomMask2);
+
+				double percOverlapsCh2 = (double)ch2RandomOverlaps/(double)ch2Clusters.size();
+				double percOverlapsCh1 = (double)ch1RandomOverlaps/(double)ch1Clusters.size();
+
+				if (percOverlapsCh2 >= ch2Percentage){
+					countForPvalCh2 +=1;
+				}
+				if (percOverlapsCh1 >= ch1Percentage){
+					countForPvalCh1 +=1;
+				}
+
+				if (simImageOption){
+					byte[] redRandom;
+					byte[] greenRandom;
+					byte[] blueRandom;
+					//Red Green
+					if (ch1Color == 0 && ch2Color == 1){
+						redRandom = (byte[]) ipCh1Random.getPixels();
+						greenRandom =(byte[]) ipCh2Random.getPixels();
+						blueRandom = ch3;
+					}
+					//Green Blue
+					else if (ch1Color == 1 && ch2Color == 0){
+						greenRandom = (byte[]) ipCh1Random.getPixels();
+						redRandom = (byte[]) ipCh2Random.getPixels();
+						blueRandom = ch3;
+					}
+					//Blue Red
+					else if(ch1Color == 2 && ch2Color == 0) {
+						blueRandom= (byte[]) ipCh1Random.getPixels();
+						redRandom = (byte[]) ipCh2Random.getPixels();
+						greenRandom = ch3;
+					}
+					//Red Blue
+					else if(ch1Color == 0 && ch2Color == 2) {
+						redRandom= (byte[]) ipCh1Random.getPixels();
+						blueRandom = (byte[]) ipCh2Random.getPixels();
+						greenRandom = ch3;
+					}
+					//Blue Green
+					else if (ch1Color == 2 && ch2Color == 1 ){
+						blueRandom= (byte[]) ipCh1Random.getPixels();
+						greenRandom = (byte[]) ipCh2Random.getPixels();
+						redRandom = ch3;
+					}
+					//Green Blue
+					else{
+						greenRandom= (byte[]) ipCh1Random.getPixels();
+						blueRandom = (byte[]) ipCh2Random.getPixels();
+						redRandom = ch3;
+					}
+					//Color Simulation
+					ColorProcessor ipSimulation = new ColorProcessor(M, N);
+
+					ipSimulation.setRGB(redRandom, greenRandom, blueRandom);
+					ImagePlus colorRandIm = new ImagePlus(name + "_Sim" + nSimulation, ipSimulation);
+					FileSaver fileSave = new FileSaver(colorRandIm);
+					fileSave.saveAsTiff(imagedir+name+"_Sim" + nSimulation+".tiff");
+
+				}
 
 			}
+
+			pValCh1Ch2 = countForPvalCh2/(double)nMaxSimulationsIF;
+			double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulationsIF);
+			IFCh1Ch2 = fs.calcIF(ch2ClustersProbsTest, ch2Percentage);
+
+			pValCh2Ch1 = countForPvalCh1/(double)nMaxSimulationsIF;
+			double[] ch1ClustersProbsTest = fs.prob(ch1ClustersProbs, nMaxSimulationsIF);
+			IFCh2Ch1 = fs.calcIF(ch1ClustersProbsTest, ch1Percentage);
 
 		}
-		
-		double pValCh1Ch2 = countForPvalCh2/(double)nMaxSimulationsIF;
-		double[] ch2ClustersProbsTest = fs.prob(ch2ClustersProbs, nMaxSimulationsIF);
-		double IFCh1Ch2 = 0;
-		IFCh1Ch2 = fs.calcIF(ch2ClustersProbsTest, ch2Percentage);
-		
-		double pValCh2Ch1 = countForPvalCh1/(double)nMaxSimulationsIF;
-		double[] ch1ClustersProbsTest = fs.prob(ch1ClustersProbs, nMaxSimulationsIF);
-		double IFCh2Ch1 = 0;
-		IFCh2Ch1 = fs.calcIF(ch1ClustersProbsTest, ch1Percentage);
-		
+
 		//Summary Measurements
 		summary.incrementCounter();
 		summary.addValue("Image", name);
@@ -946,35 +1023,44 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		//Overlap Measurements
 
 		String pValStrCh1Ch2;
-		
-		if (pValCh1Ch2 == 0){
-			pValStrCh1Ch2 = "p<0.02" ;
-		}
-		else{
-			pValStrCh1Ch2 ="p="+ String.valueOf(pValCh1Ch2);
-		}
-		
 		String pValStrCh2Ch1;
-		
-		if (pValCh2Ch1 == 0){
-			pValStrCh2Ch1 = "p<0.02" ;
+		if(calcIFOption)
+		{
+			if (pValCh1Ch2 == 0){
+				pValStrCh1Ch2 = "p<0.02" ;
+			}
+			else{
+				pValStrCh1Ch2 ="p="+ String.valueOf(pValCh1Ch2);
+			}
+
+			if (pValCh2Ch1 == 0){
+				pValStrCh2Ch1 = "p<0.02" ;
+			}
+			else{
+				pValStrCh2Ch1 ="p="+ String.valueOf(pValCh2Ch1);
+			}
+
+			summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" IF", IFCh1Ch2);
+			summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" p-val", pValStrCh1Ch2);
+
+			if (moveCh1Clusters){
+				summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", IFCh2Ch1);
+				summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", pValStrCh2Ch1);
+			}
+			else{
+				summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", "NT");
+				summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", "NT");
+			}
 		}
-		else{
-			pValStrCh2Ch1 ="p="+ String.valueOf(pValCh2Ch1);
-		}
-		
-		summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" IF", IFCh1Ch2);
-		summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" p-val", pValStrCh1Ch2);
-		
-		if (moveCh1Clusters){
-			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", IFCh2Ch1);
-			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", pValStrCh2Ch1);
-		}
-		else{
+		else
+		{
+			summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" IF", "NT");
+			summary.addValue(channelsAbb[ch1Color]+ "-" +channelsAbb[ch2Color]+" p-val", "NT");
 			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", "NT");
 			summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", "NT");
 		}
-		
+
+
 		for (int c1 = 0; c1 < 3; c1++){
 			for(int c2 = 0; c2 < 3; c2++){
 				if (c1 != c2){
@@ -989,8 +1075,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 					}
 				}
-				}
 			}
+		}
 		
 		//Segmentation
 		summary.addValue("Th Algorithm", thMethods[thMethodInt]);

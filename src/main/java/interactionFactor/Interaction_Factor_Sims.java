@@ -59,14 +59,18 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
     private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Clusters_Sum_Inten","Clusters_Mean_Inten","Ch1_Stoichiometry","Ch2_Stoichiometry",
 			"Clusters_Overlaps","%Clusters_Overlpas","Overlap_Count","Overlap_Area"};
 	private boolean[] measurVals = {false,false,false,false,false,false,false,false,false,false,false,false};
-	private String[] outputImg = {"Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations_Table"};
-	private boolean[] outputImgVals = {false,false,false,false,false};
+	private String[] outputImg = {"Show_Simulations","Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations_Table"};
+	private boolean[] outputImgVals = {false,false,false,false,false,false};
 	
 	private int thMethodInt = 11 ;
 	private int ch1Color = 0 ;
 	private int ch2Color = 1 ;
 	private boolean edgeOption = false;
 	private boolean moveCh1Clusters = false ;
+
+	private boolean thManualOption = false;
+	private int thManual_ch1Level = 0;
+	private int thManual_ch2Level = 0;
 
 	//Measurement Options
 	private boolean overlapsOpt = false ;
@@ -82,6 +86,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 	private boolean ch2StoiOption = false ;
 	
 	//Output Options
+	private boolean showSimsOption = false;
 	private boolean ch1MaskOption = false;
 	private boolean ch2MaskOption = false;
 	private boolean roiMaskOption = false;
@@ -124,11 +129,19 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 					
 					Choice choice2 = (Choice) gd.getChoices().get(2);
 					int thMethodInt = choice2.getSelectedIndex();
+
+					Vector numFields = gd.getNumericFields();
+					TextField numField0 = (TextField) numFields.get(0);
+					TextField numField1 = (TextField) numFields.get(1);
+					int thManual_ch1Level = Integer.parseInt(numField0.getText());
+					int thManual_ch2Level = Integer.parseInt(numField1.getText());
 					
 					//checkbox
 					Vector checkboxes = gd.getCheckboxes();
 					Checkbox check0 = (Checkbox) checkboxes.get(0);
-					boolean edgeOption = check0.getState();
+					Checkbox check1 = (Checkbox) checkboxes.get(1);
+					boolean thManualOption = check0.getState();
+					boolean edgeOption = check1.getState();
 
 					IfFunctions fs = new IfFunctions();
 
@@ -228,19 +241,28 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 					ImageProcessor ipCh1Mask = ipCh1.duplicate();
 					ImageProcessor ipCh2Mask = ipCh2.duplicate();
 
-					AutoThresholder autoth = new AutoThresholder();
+					int th_ch1 = thManual_ch1Level;
+					int th_ch2 = thManual_ch2Level;
+					if(!thManualOption)
+					{
+						AutoThresholder autoth = new AutoThresholder();
 
-					// Threshold ch1 channel
-					ipCh1Mask.setMask(ipMask);
-					int[] ch1_hist = ipCh1Mask.getHistogram();
-					int th_ch1 = autoth.getThreshold(method, ch1_hist);
+						// Threshold ch1 channel
+						ipCh1Mask.setMask(ipMask);
+						int[] ch1_hist = ipCh1Mask.getHistogram();
+						th_ch1 = autoth.getThreshold(method, ch1_hist);
+
+
+						// Threshold ch2 channel
+						ipCh2Mask.setMask(ipMask);
+						int[] ch2_hist = ipCh2Mask.getHistogram();
+						th_ch2 = autoth.getThreshold(method, ch2_hist);
+
+					}
 					ipCh1Mask.threshold(th_ch1);
-
-					// Threshold ch2 channel
-					ipCh2Mask.setMask(ipMask);
-					int[] ch2_hist = ipCh2Mask.getHistogram();
-					int th_ch2 = autoth.getThreshold(method, ch2_hist);
 					ipCh2Mask.threshold(th_ch2);
+
+
 					
 					IJ.setThreshold(im, th_ch2, 255,"Red");
 					im.updateAndDraw();
@@ -284,7 +306,12 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
          ch1Color =  (int) Prefs.get(PREF_KEY + "ch1Color", 0);
          ch2Color = (int) Prefs.get(PREF_KEY + "ch2Color", 1);
          edgeOption = Prefs.get(PREF_KEY + "edgeOption", true);
-		
+
+		 thManualOption = Prefs.get(PREF_KEY + "thManualOption",false);
+		 thManual_ch1Level = (int) Prefs.get(PREF_KEY + "thManual_ch1Level",0);
+		 thManual_ch2Level = (int) Prefs.get(PREF_KEY + "thManual_ch2Level",0);
+
+
         //Measurement Options
   		 overlapsOpt = Prefs.get(PREF_KEY + "overlapsOpt", true);
   		 overlapsPercOpt = Prefs.get(PREF_KEY + "overlapsPercOpt", true);
@@ -299,6 +326,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
   		 ch2StoiOption =Prefs.get(PREF_KEY + "ch2StoiOption", true );
   		
 		//Output Options
+		 showSimsOption = Prefs.get(PREF_KEY + "showSimsOption", false);
          ch1MaskOption = Prefs.get(PREF_KEY + "ch1MaskOption", false);
          ch2MaskOption =  Prefs.get(PREF_KEY + "ch2MaskOption", false);
          roiMaskOption = Prefs.get(PREF_KEY + "roiMaskOption", false);
@@ -328,11 +356,12 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		measurVals[10]= overlapsAreaOpt;
 		
 		//Output options
-		outputImgVals[0] = ch1MaskOption;
-		outputImgVals[1] = ch2MaskOption;
-		outputImgVals[2] = roiMaskOption;
-		outputImgVals[3] = overlapMaskOption;
-		outputImgVals[4] = overlapLocations;
+		outputImgVals[0] = showSimsOption;
+		outputImgVals[1] = ch1MaskOption;
+		outputImgVals[2] = ch2MaskOption;
+		outputImgVals[3] = roiMaskOption;
+		outputImgVals[4] = overlapMaskOption;
+		outputImgVals[5] = overlapLocations;
         
 		//Dialog
         
@@ -343,6 +372,9 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         gd.addChoice("Channel_1_(Ch1)_Color:", channels, channels[ch1Color]);
         gd.addChoice("Channel_2_(Ch2)_Color:", channels, channels[ch2Color]);
         gd.addChoice("Threshold:", thMethods, thMethods[thMethodInt]);
+		gd.addCheckbox("Use_Manual_Threshold", thManualOption);
+		gd.addNumericField("Channel_1_Threshold", thManual_ch1Level, 0);
+		gd.addNumericField("Channel_2_Threshold", thManual_ch2Level, 0);
         gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
        
         
@@ -371,9 +403,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		
 		gd.addMessage("-------------- Output Images ---------------\n");
 		gd.addCheckboxGroup(3, 2, outputImg, outputImgVals);
-       
-        
-        
+
         gd.showDialog();
         Recorder.recordInMacros = true;
         
@@ -398,7 +428,11 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 				thMethodInt = i;
 			}
 		}
-        
+
+		thManualOption = gd.getNextBoolean();
+		thManual_ch1Level = (int) gd.getNextNumber();
+		thManual_ch2Level = (int) gd.getNextNumber();
+
         edgeOption = gd.getNextBoolean();
 		
 		areaOption = gd.getNextBoolean();
@@ -415,7 +449,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		overlapsPercOpt = gd.getNextBoolean();
 		overlapsCountOpt = gd.getNextBoolean();
 		overlapsAreaOpt = gd.getNextBoolean();
-		
+
+		showSimsOption = gd.getNextBoolean();
 		ch1MaskOption = gd.getNextBoolean();
 		ch2MaskOption = gd.getNextBoolean();
 		roiMaskOption = gd.getNextBoolean();
@@ -440,11 +475,19 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 			Recorder.recordOption("channel_1(ch1)_color",ch1ColorStr);
 			Recorder.recordOption("channel_2(ch2)_color",ch2ColorStr);
 			Recorder.recordOption("threshold",thMethodIntStr);
+
+			Recorder.recordOption("Channel_1_Threshold",Integer.toString(thManual_ch1Level));
+			Recorder.recordOption("Channel_2_Threshold",Integer.toString(thManual_ch2Level));
+
 			Recorder.recordOption("Ch1_Simulation",ch1SimParam);
 			Recorder.recordOption("Ch2_Simulation",ch2SimParam);
 			Recorder.recordOption("Interaction_Factor",Double.toString(interFactorCh2));
 			Recorder.recordOption("Number_of_Simulations",Integer.toString(nMaxSimulations));
-			
+
+			if (thManualOption){
+				Recorder.recordOption("Use_Manual_Threshold");
+			}
+
 			if (edgeOption){
 				Recorder.recordOption("Exclude_Edge_Clusters");
 			}
@@ -478,6 +521,9 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 			if(overlapsAreaOpt){
 				Recorder.recordOption("Overlap_Area");
 			}
+			if(showSimsOption){
+				Recorder.recordOption("Show_Simulations");
+			}
 			if(ch1MaskOption){
 				Recorder.recordOption("Show_Ch1_Mask");
 			}
@@ -499,6 +545,10 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
   		Prefs.set(PREF_KEY+"areaOption", areaOption);
   		Prefs.set(PREF_KEY+"areaRoiOption", areaRoiOption);
 
+		Prefs.set(PREF_KEY+"thManualOption", thManualOption);
+		Prefs.set(PREF_KEY + "thManual_ch1Level", thManual_ch1Level);
+		Prefs.set(PREF_KEY + "thManual_ch2Level", thManual_ch2Level);
+
   		//Measurements
   		Prefs.set(PREF_KEY + "overlapsOpt", overlapsOpt);
   		Prefs.set(PREF_KEY + "overlapsPercOpt", overlapsPercOpt);
@@ -511,6 +561,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
   		Prefs.set(PREF_KEY + "ch2StoiOption", ch2StoiOption);
   		
   		//Output options
+		Prefs.set(PREF_KEY + "showSimsOption", showSimsOption);
   		Prefs.set(PREF_KEY + "ch1MaskOption", ch1MaskOption);
   		Prefs.set(PREF_KEY + "ch2MaskOption", ch2MaskOption);
   		Prefs.set(PREF_KEY + "roiMaskOption", roiMaskOption);
@@ -534,6 +585,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             IJ.error("Channel Colors are the same. Choose another channel");
             return;
         }
+
+		//TODO add check if (thManualOption is true, make sure thManual_ch1Level,thManual_ch2Level are in bounds
         
         if(ch2SimParam.equals("NonRandom")){
             if (interFactorCh2 >= 1.0){
@@ -662,19 +715,26 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         ImageProcessor ipCh1Mask = ipCh1.duplicate();
         ImageProcessor ipCh2Mask = ipCh2.duplicate();
 
-        AutoThresholder autoth = new AutoThresholder();
+		int th_ch1 = thManual_ch1Level;
+		int th_ch2 = thManual_ch2Level;
+		if(!thManualOption)
+		{
+			AutoThresholder autoth = new AutoThresholder();
 
-        //Threshold ch1 channel
-        ipCh1Mask.setMask(ipMask);
-        int[] ch1_hist = ipCh1Mask.getHistogram();
-        int th_ch1 = autoth.getThreshold(method, ch1_hist);
-        ipCh1Mask.threshold(th_ch1);
+			//Threshold ch1 channel
+			ipCh1Mask.setMask(ipMask);
+			int[] ch1_hist = ipCh1Mask.getHistogram();
+			th_ch1 = autoth.getThreshold(method, ch1_hist);
 
-        //Threshold ch2 channel
-        ipCh2Mask.setMask(ipMask);
-        int[] ch2_hist = ipCh2Mask.getHistogram();
-        int th_ch2 = autoth.getThreshold(method, ch2_hist);
-        ipCh2Mask.threshold(th_ch2);
+			//Threshold ch2 channel
+			ipCh2Mask.setMask(ipMask);
+			int[] ch2_hist = ipCh2Mask.getHistogram();
+			th_ch2 = autoth.getThreshold(method, ch2_hist);
+
+		}
+		ipCh1Mask.threshold(th_ch1);
+		ipCh2Mask.threshold(th_ch2);
+
         if (edgeOption) {
             if (hasRoi){
                 fs.excludeEdgesRoi(roiSelection,ipMask, ipCh1Mask);
@@ -1039,10 +1099,15 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
                 double interFactorCh2Int = interFactorCh2*100;
                 
                 
-                ImagePlus colorRandIm = new ImagePlus(name + "_Sim_IF_"+Integer.toString((int)interFactorCh2Int) +"_"+nSimulation, ipSimulation);
-                colorRandIm.setCalibration(cal);
 
-                colorRandIm.show();
+
+				if(showSimsOption)
+				{
+					ImagePlus colorRandIm = new ImagePlus(name + "_Sim_IF_"+Integer.toString((int)interFactorCh2Int) +"_"+nSimulation, ipSimulation);
+					colorRandIm.setCalibration(cal);
+					colorRandIm.show();
+				}
+
                 
                 //generate ch2 channel mask
                 ImageProcessor ipCh2RandomMask = ipCh2Random.duplicate();
