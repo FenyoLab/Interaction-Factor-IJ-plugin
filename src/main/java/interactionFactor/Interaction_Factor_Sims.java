@@ -57,7 +57,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
     private static  String[] simParametersCh2 = {"Random", "NonRandom"};
     
     private String[] measurements = {"Clusters_Area","ROI_Area","Sum_Pixel_Inten","Clusters_Sum_Inten","Clusters_Mean_Inten","Ch1_Stoichiometry","Ch2_Stoichiometry",
-			"Clusters_Overlaps","%Clusters_Overlpas","Overlap_Count","Overlap_Area"};
+			"Clusters_Overlaps","%Clusters_Overlaps","Overlap_Count","Overlap_Area"};
 	private boolean[] measurVals = {false,false,false,false,false,false,false,false,false,false,false,false};
 	private String[] outputImg = {"Show_Simulations","Show_Ch1_Mask","Show_Ch2_Mask","Show_ROI_Mask","Show_Overlap_Mask","Overlap_Locations_Table"};
 	private boolean[] outputImgVals = {false,false,false,false,false,false};
@@ -71,6 +71,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 	private boolean thManualOption = false;
 	private int thManual_ch1Level = 0;
 	private int thManual_ch2Level = 0;
+	private double minClusterArea = 0;
 
 	//Measurement Options
 	private boolean overlapsOpt = false ;
@@ -133,8 +134,11 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 					Vector numFields = gd.getNumericFields();
 					TextField numField0 = (TextField) numFields.get(0);
 					TextField numField1 = (TextField) numFields.get(1);
+					TextField numField2 = (TextField) numFields.get(2);
+					
 					int thManual_ch1Level = Integer.parseInt(numField0.getText());
 					int thManual_ch2Level = Integer.parseInt(numField1.getText());
+					double minClusterArea = Double.parseDouble(numField2.getText());
 					
 					//checkbox
 					Vector checkboxes = gd.getCheckboxes();
@@ -276,7 +280,11 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 							fs.excludeEdges(roi, ipMask, ipCh2Mask);
 						}
 					}
-					
+					if (minClusterArea > 0){
+						fs.removeClusters(ipCh1Mask, minClusterArea);
+						fs.removeClusters(ipCh2Mask, minClusterArea);
+						
+					}
 					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
 					Color stColor = Color.WHITE;
 					chsOverlays.setStrokeColor(stColor);
@@ -310,6 +318,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		 thManualOption = Prefs.get(PREF_KEY + "thManualOption",false);
 		 thManual_ch1Level = (int) Prefs.get(PREF_KEY + "thManual_ch1Level",0);
 		 thManual_ch2Level = (int) Prefs.get(PREF_KEY + "thManual_ch2Level",0);
+		 minClusterArea = (double) Prefs.get(PREF_KEY + "minClusterArea", 0);
 
 
         //Measurement Options
@@ -376,7 +385,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		gd.addNumericField("Channel_1_Threshold", thManual_ch1Level, 0);
 		gd.addNumericField("Channel_2_Threshold", thManual_ch2Level, 0);
         gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
-       
+		gd.addNumericField("Cluster_Minimum_Area", minClusterArea, 0);
+
         
         // ***** Apply and Remove Overlay Buttons *****
         
@@ -432,6 +442,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		thManualOption = gd.getNextBoolean();
 		thManual_ch1Level = (int) gd.getNextNumber();
 		thManual_ch2Level = (int) gd.getNextNumber();
+		minClusterArea = gd.getNextNumber();
 
         edgeOption = gd.getNextBoolean();
 		
@@ -478,6 +489,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 
 			Recorder.recordOption("Channel_1_Threshold",Integer.toString(thManual_ch1Level));
 			Recorder.recordOption("Channel_2_Threshold",Integer.toString(thManual_ch2Level));
+		  	Recorder.recordOption("Cluster_Minimum_Area", Double.toString(minClusterArea));
 
 			Recorder.recordOption("Ch1_Simulation",ch1SimParam);
 			Recorder.recordOption("Ch2_Simulation",ch2SimParam);
@@ -548,6 +560,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		Prefs.set(PREF_KEY+"thManualOption", thManualOption);
 		Prefs.set(PREF_KEY + "thManual_ch1Level", thManual_ch1Level);
 		Prefs.set(PREF_KEY + "thManual_ch2Level", thManual_ch2Level);
+		Prefs.set(PREF_KEY + "minClusterArea", minClusterArea);
 
   		//Measurements
   		Prefs.set(PREF_KEY + "overlapsOpt", overlapsOpt);
@@ -752,8 +765,12 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
             Analyzer.setResultsTable(summary);
         }
         ResultsTable rTable = new ResultsTable();
+        //Remove Small Clusters
+  		if (minClusterArea > 0){
+  			fs.removeClusters(ipCh1Mask, minClusterArea);
+  			fs.removeClusters(ipCh2Mask, minClusterArea);
+  		}
         //Generate overlap mask
-
         ipOverlaps.copyBits(ipCh1Mask, 0, 0, Blitter.COPY);
         ipOverlaps.copyBits(ipCh2Mask, 0, 0, Blitter.AND);
 
@@ -766,7 +783,6 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		
         int ch1Overlaps = fs.ch2ClusterOverlaps(ipCh2Mask, ipCh1Mask);
         int ch2Overlaps = fs.ch2ClusterOverlaps(ipCh1Mask, ipCh2Mask);
-
 
         //Ch1 clusters
         ImageProcessor ipCh1Flood = ipCh1Mask.duplicate();

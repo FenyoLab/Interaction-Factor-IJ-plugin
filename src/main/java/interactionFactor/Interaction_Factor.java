@@ -75,7 +75,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	private boolean thManualOption = false;
 	private int thManual_ch1Level = 0;
 	private int thManual_ch2Level = 0;
-
+	private double minClusterArea = 0;
 	//option to Not calculate IF at all but to just output the coloc measurements
 	private boolean calcIFOption = true;
 
@@ -126,9 +126,11 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					Vector numFields = gd.getNumericFields();
 					TextField numField0 = (TextField) numFields.get(0);
 					TextField numField1 = (TextField) numFields.get(1);
+					TextField numField2 = (TextField) numFields.get(2);
 					thManual_ch1Level = Integer.parseInt(numField0.getText());
 					thManual_ch2Level = Integer.parseInt(numField1.getText());
-
+					minClusterArea = Double.parseDouble(numField2.getText());
+					
 					Vector checkboxes = gd.getCheckboxes();
 					
 					Checkbox check0 = (Checkbox) checkboxes.get(0);
@@ -180,7 +182,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					 overlapMaskOption = check19.getState();
 					 overlapLocations = check20.getState();
 					
-					run_IF(ch1Color,ch2Color,thMethodInt,thManualOption,thManual_ch1Level,thManual_ch2Level,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,
+					run_IF(ch1Color,ch2Color,thMethodInt,thManualOption,thManual_ch1Level,thManual_ch2Level,minClusterArea,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,
 							overlapsPercOpt,overlapsCountOpt,overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,
 							ch2MaskOption,roiMaskOption, overlapMaskOption,overlapLocations);
 					
@@ -199,8 +201,11 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 					Vector numFields = gd.getNumericFields();
 					TextField numField0 = (TextField) numFields.get(0);
 					TextField numField1 = (TextField) numFields.get(1);
+					TextField numField2 = (TextField) numFields.get(2);
+					
 					int thManual_ch1Level = Integer.parseInt(numField0.getText());
 					int thManual_ch2Level = Integer.parseInt(numField1.getText());
+					double minClusterArea = Double.parseDouble(numField2.getText());
 					
 					//checkbox
 					Vector checkboxes = gd.getCheckboxes();
@@ -339,6 +344,12 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 							fs.excludeEdges(roi, ipMask, ipCh2Mask);
 						}
 					}
+					
+					if (minClusterArea > 0){
+						fs.removeClusters(ipCh1Mask, minClusterArea);
+						fs.removeClusters(ipCh2Mask, minClusterArea);
+					}
+					
 					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
 					Color stColor = Color.WHITE;
 					chsOverlays.setStrokeColor(stColor);
@@ -368,7 +379,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 thManualOption = Prefs.get(PREF_KEY + "thManualOption",false);
 		 thManual_ch1Level = (int) Prefs.get(PREF_KEY + "thManual_ch1Level",0);
 		 thManual_ch2Level = (int) Prefs.get(PREF_KEY + "thManual_ch2Level",0);
-
+		 minClusterArea = (double) Prefs.get(PREF_KEY + "minClusterArea", 0);
 		 calcIFOption = Prefs.get(PREF_KEY + "calcIFOption",false);
 
 		//Measurement Options
@@ -426,6 +437,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		gd.addNumericField("Channel_1_Threshold", thManual_ch1Level, 0);
 		gd.addNumericField("Channel_2_Threshold", thManual_ch2Level, 0);
 		gd.addCheckbox("Exclude_Edge_Clusters", edgeOption);
+		gd.addNumericField("Cluster_Minimum_Area", minClusterArea, 0);
 
 		// ***** Apply and Remove Overlay Buttons *****
 		Panel buttons = new Panel();
@@ -495,7 +507,8 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 thManualOption = gd.getNextBoolean();
 		 thManual_ch1Level = (int) gd.getNextNumber();
 		 thManual_ch2Level = (int) gd.getNextNumber();
-		
+		 minClusterArea = gd.getNextNumber();
+		 
 		 edgeOption = gd.getNextBoolean();
 		 calcIFOption = gd.getNextBoolean();
 		 moveCh1Clusters = gd.getNextBoolean();
@@ -522,7 +535,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		 overlapMaskOption = gd.getNextBoolean();
 		 overlapLocations = gd.getNextBoolean();
 
-		 run_IF(ch1Color,ch2Color,thMethodInt,thManualOption,thManual_ch1Level,thManual_ch2Level,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,
+		 run_IF(ch1Color,ch2Color,thMethodInt,thManualOption,thManual_ch1Level,thManual_ch2Level,minClusterArea,edgeOption,moveCh1Clusters,areaOption,areaRoiOption,overlapsOpt,
 				 overlapsPercOpt,overlapsCountOpt,overlapsAreaOpt,sumIntOption,sumIntThOption,meanIntThOption,ch1StoiOption,ch2StoiOption,simImageOption,ch1MaskOption,
 				 ch2MaskOption,roiMaskOption,overlapMaskOption,overlapLocations);
 		
@@ -534,8 +547,9 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 
 			  	Recorder.recordOption("Channel_1_Threshold",Integer.toString(thManual_ch1Level));
 			  	Recorder.recordOption("Channel_2_Threshold",Integer.toString(thManual_ch2Level));
-
-			    if (thManualOption){
+			  	Recorder.recordOption("Cluster_Minimum_Area", Double.toString(minClusterArea));
+			    
+			  	if (thManualOption){
 					Recorder.recordOption("Use_Manual_Threshold");
 				}
 
@@ -595,7 +609,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 	}
 	
 	
-	public void run_IF(int ch1Color,int ch2Color,int thMethodInt,boolean thManualOption, int thManual_ch1Level, int thManual_ch2Level,
+	public void run_IF(int ch1Color,int ch2Color,int thMethodInt,boolean thManualOption, int thManual_ch1Level, int thManual_ch2Level,double minClusterArea,
 					    boolean edgeOption,boolean moveCh1Clusters,boolean areaOption,boolean areaRoiOption,boolean overlapsOpt,boolean overlapsPercOpt,boolean overlapsCountOpt,
 						boolean overlapsAreaOpt,boolean sumIntOption,boolean sumIntThOption,boolean meanIntThOption,boolean ch1StoiOption,boolean ch2StoiOption,boolean simImageOption,
 					    boolean ch1MaskOption,boolean ch2MaskOption,boolean roiMaskOption, boolean overlapMaskOption,boolean overlapLocations)
@@ -615,7 +629,7 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 		Prefs.set(PREF_KEY+"thManualOption", thManualOption);
 		Prefs.set(PREF_KEY + "thManual_ch1Level", thManual_ch1Level);
 		Prefs.set(PREF_KEY + "thManual_ch2Level", thManual_ch2Level);
-
+		Prefs.set(PREF_KEY + "minClusterArea", minClusterArea);
 		Prefs.set(PREF_KEY+"calcIFOption", calcIFOption);
 
 		//Measurements
@@ -799,6 +813,11 @@ public class Interaction_Factor implements PlugIn, DialogListener {
 			Analyzer.setResultsTable(summary);
 		}
 		ResultsTable rTable = new ResultsTable();
+		//Remove Small Clusters
+		if (minClusterArea > 0){
+			fs.removeClusters(ipCh1Mask, minClusterArea);
+			fs.removeClusters(ipCh2Mask, minClusterArea);
+		}
 		
 		// Generate overlap mask
 		ipOverlaps.copyBits(ipCh1Mask, 0, 0, Blitter.COPY);

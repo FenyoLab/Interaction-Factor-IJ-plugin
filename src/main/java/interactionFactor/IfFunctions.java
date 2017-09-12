@@ -752,6 +752,72 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 		return ovCh;
 
 	}
+	void removeClusters(ImageProcessor channelMask, double minClusterArea) {
+		
+		ImageProcessor ipFlood = channelMask.duplicate();
+		Wand wand = new Wand(ipFlood);
+
+		int M = ipFlood.getWidth();
+		int N = ipFlood.getHeight();
+
+		for (int u = 0; u < M; u++) {
+			for (int v = 0; v < N; v++) {
+				int p = ipFlood.get(u, v);
+				if (p == 255) {
+
+					wand.autoOutline(u, v, 255, 255,8);
+					PolygonRoi roi_par = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
+					ipFlood.setRoi(roi_par);
+					ImageProcessor roi_parMask = roi_par.getMask();
+
+					Rectangle region_r = roi_par.getBounds();
+
+					// new image processor of intensity
+
+					// ROI corner coordinates:
+					int rLeft = region_r.x;
+					int rTop = region_r.y;
+					int rRight = rLeft + region_r.width;
+					int rBottom = rTop + region_r.height;
+
+					// process all pixels inside the ROI
+					int num_nonzero = 0;
+					for (int y = rTop; y < rBottom; y++) {
+						for (int x = rLeft; x < rRight; x++) {
+							if (roi_parMask.getPixel(x - rLeft, y - rTop) > 0) {
+								int pixel = channelMask.getPixel(x, y);
+								if(pixel > 0)
+								{
+									num_nonzero = num_nonzero+1;
+								}
+								roi_parMask.putPixel(x - rLeft, y - rTop, pixel);
+
+							}
+						}
+					}
+					if(num_nonzero > 0)
+					{						
+						// Then add the image processor of intensity to the list
+						ipFlood.setRoi(roi_par);						
+						ipFlood.setValue(200);					
+						ipFlood.fill(roi_par);
+						
+						channelMask.setRoi(roi_par);
+						ImageStatistics stats = channelMask.getStatistics();
+						double clusterArea = stats.area;
+						if (clusterArea < minClusterArea){
+							channelMask.setValue(0);
+							channelMask.fill(roi_par);
+						}						
+					}
+					else
+					{
+						int xx = 0;
+					}
+				}
+			}
+		}
+	}
 
 	int clustersProcessing(String imageName, boolean results, ResultsTable rt, Calibration calibration,
 			ImageProcessor ipFlood, ImageProcessor channel, List<ImageProcessor> clusters,
