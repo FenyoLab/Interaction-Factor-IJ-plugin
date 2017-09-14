@@ -752,7 +752,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 		return ovCh;
 
 	}
-	void removeClusters(ImageProcessor channelMask, double minClusterArea) {
+	void removeClusters(ImageProcessor channelMask, double minClusterArea, double calibration) {
 		
 		ImageProcessor ipFlood = channelMask.duplicate();
 		Wand wand = new Wand(ipFlood);
@@ -804,7 +804,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 						
 						channelMask.setRoi(roi_par);
 						ImageStatistics stats = channelMask.getStatistics();
-						double clusterArea = stats.area;
+						double clusterArea = stats.area*calibration;
 						if (clusterArea < minClusterArea){
 							channelMask.setValue(0);
 							channelMask.fill(roi_par);

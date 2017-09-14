@@ -280,10 +280,15 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 							fs.excludeEdges(roi, ipMask, ipCh2Mask);
 						}
 					}
+					//Calibration
+			        Calibration cal =im.getCalibration();
+			        double pixelHeight = cal.pixelHeight;
+			        double pixelWidth = cal.pixelWidth;
+			        double calConvert = pixelHeight*pixelWidth;
+			        
 					if (minClusterArea > 0){
-						fs.removeClusters(ipCh1Mask, minClusterArea);
-						fs.removeClusters(ipCh2Mask, minClusterArea);
-						
+						fs.removeClusters(ipCh1Mask, minClusterArea,calConvert);
+						fs.removeClusters(ipCh2Mask, minClusterArea,calConvert);						
 					}
 					Overlay chsOverlays = fs.returnOverlay(ipCh1Mask, ipCh2Mask);
 					Color stColor = Color.WHITE;
@@ -292,8 +297,7 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 
 				}
 				if(command == "Clear Overlay")
-				{
-				
+				{				
 					IJ.run("Remove Overlay");
 				}
 			}
@@ -767,8 +771,8 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
         ResultsTable rTable = new ResultsTable();
         //Remove Small Clusters
   		if (minClusterArea > 0){
-  			fs.removeClusters(ipCh1Mask, minClusterArea);
-  			fs.removeClusters(ipCh2Mask, minClusterArea);
+  			fs.removeClusters(ipCh1Mask, minClusterArea,calConvert);
+  			fs.removeClusters(ipCh2Mask, minClusterArea,calConvert);
   		}
         //Generate overlap mask
         ipOverlaps.copyBits(ipCh1Mask, 0, 0, Blitter.COPY);
@@ -964,7 +968,13 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
 		}
 
 		//Segmentation
-		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
+		if (thManualOption){
+			summary.addValue("Th Algorithm", "Manual");
+		}
+		else{
+			summary.addValue("Th Algorithm", thMethods[thMethodInt]);
+		}
+				
 		summary.addValue(channelsAbb[ch1Color] + " Th", th_ch1);
 		summary.addValue(channelsAbb[ch2Color] + " Th", th_ch2);
 		summary.addValue(channelsAbb[ch1Color] +" Clus Count", ch1ClusterCount);
@@ -1198,7 +1208,13 @@ public class Interaction_Factor_Sims implements PlugIn, DialogListener {
                 
                 summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" IF", "NT");
         		summary.addValue(channelsAbb[ch2Color]+ "-" +channelsAbb[ch1Color]+" p-val", "NT");
-        		summary.addValue("Th Algorithm", thMethods[thMethodInt]);
+        		//Segmentation
+        		if (thManualOption){
+        			summary.addValue("Th Algorithm", "Manual");
+        		}
+        		else{
+        			summary.addValue("Th Algorithm", thMethods[thMethodInt]);
+        		}
         		summary.addValue(channelsAbb[ch1Color] + " Th", th_ch1);
         		summary.addValue(channelsAbb[ch2Color] + " Th", th_ch2);
         		summary.addValue(channelsAbb[ch1Color] +" Clus Count", ch1ClusterCount);
