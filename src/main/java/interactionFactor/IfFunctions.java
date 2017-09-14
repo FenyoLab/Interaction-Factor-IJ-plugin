@@ -805,7 +805,7 @@ int[] clusterStoichiometry(ImageProcessor ipCh1Mask, ImageProcessor ipCh2Mask) {
 						channelMask.setRoi(roi_par);
 						ImageStatistics stats = channelMask.getStatistics();
 						double clusterArea = stats.area*calibration;
-						if (clusterArea < minClusterArea){
+						if (clusterArea <= minClusterArea){
 							channelMask.setValue(0);
 							channelMask.fill(roi_par);
 						}						
