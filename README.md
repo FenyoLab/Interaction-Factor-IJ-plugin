@@ -7,6 +7,6 @@ Please refer to [manuscript](https://www.biorxiv.org/content/early/2017/08/17/17
 
 To download the jar file and download the zip file click here. Pleare read help documentation before using.
 
-[Help Doc](https://github.com/FenyoLab/Interaction-Factor-IJ-plugin/Help_Doc_IF_IJ_plugin_V1.1.0.pdf)
+[Help Doc](https://github.com/FenyoLab/Interaction-Factor-IJ-plugin/blob/master/Help_Doc_IF_IJ_plugin_V1.1.0.pdf)
 
 
