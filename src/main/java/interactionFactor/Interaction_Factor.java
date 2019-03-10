@@ -930,10 +930,10 @@ public class Interaction_Factor implements PlugIn, DialogListener
     List<Rectangle> ch2ClustersRect = new ArrayList();
 
     int ch2ClusterCount = fs.clustersProcessing(cal, rTable, ipCh2Flood, ipCh2, ch2Clusters, ch2ClustersRect);
+    boolean clustersFound = true;
 
     if ((ch1ClusterCount == 0) || (ch2ClusterCount == 0)) {
-      IJ.error("Zero Clusters. Choose another color");
-      return;
+      clustersFound = false;
     }
 
     ipCh2.setMask(ipCh2Mask);
@@ -981,7 +981,7 @@ public class Interaction_Factor implements PlugIn, DialogListener
     double pValCh2Ch1 = 0.0;
     double IFCh1Ch2 = 0.0;
     double IFCh2Ch1 = 0.0;
-    if ((calcIFOption) || (randomSimsSummaryOption))
+    if ((calcIFOption) || (randomSimsSummaryOption) & (clustersFound))
     {
       double[] ch2ClustersProbs = new double[ch2Clusters.size()];
       Arrays.fill(ch2ClustersProbs, 0.0);
