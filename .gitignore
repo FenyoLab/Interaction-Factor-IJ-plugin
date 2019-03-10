@@ -1,2 +1,16 @@
 
 
+
+*.tiff
+
+*.prefs
+
+*.jar
+
+.project
+
+*.idea/
+
+.classpath
+
+Interaction_Factor_Plugin.iml
